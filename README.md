@@ -1,0 +1,2 @@
+# Binance trader bot application
+
