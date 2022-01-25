@@ -98,6 +98,10 @@ public class BinanceClient {
         this.getBinanceWebsocketClientImpl().bookTicker(symbol, callback);
     }
 
+    public void closeAllWebsocketConnections() {
+        this.getBinanceWebsocketClientImpl().closeAllConnections();
+    }
+
     public boolean hasOpenOrders() {
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
         String response = this.getTrade().getOpenOrders(parameters);

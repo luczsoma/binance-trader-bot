@@ -5,13 +5,14 @@ import co.lucz.binancetraderbot.strategies.BuyOnPercentageDecreaseInTimeframeAnd
 import co.lucz.binancetraderbot.strategies.TradingStrategy;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.time.Duration;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -33,12 +34,18 @@ public class TraderService {
     );
 
     @PostConstruct
-    public void doTrading() {
+    private void doTrading() {
         Set<String> symbols = this.tradingStrategies.stream()
                 .map(TradingStrategy::getSymbol)
                 .map(String::toUpperCase)
                 .collect(Collectors.toUnmodifiableSet());
         this.binanceClient.cacheExchangeInfo(symbols);
+        this.subscribeToSymbols();
+    }
+
+    @Scheduled(fixedDelay = 23, timeUnit = TimeUnit.HOURS)
+    private void renewBookTickerSubscriptions() {
+        this.binanceClient.closeAllWebsocketConnections();
         this.subscribeToSymbols();
     }
 
