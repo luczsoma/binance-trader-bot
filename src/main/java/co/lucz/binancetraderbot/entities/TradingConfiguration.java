@@ -20,6 +20,17 @@ public class TradingConfiguration {
 
     private String tradingStrategyConfigurationJson;
 
+    public TradingConfiguration() {
+    }
+
+    public TradingConfiguration(String symbolId,
+                                TradingStrategyId tradingStrategyId,
+                                String tradingStrategyConfigurationJson) {
+        this.symbolId = symbolId;
+        this.tradingStrategyId = tradingStrategyId;
+        this.tradingStrategyConfigurationJson = tradingStrategyConfigurationJson;
+    }
+
     public String getSymbolId() {
         return symbolId;
     }
