@@ -3,20 +3,40 @@ package co.lucz.binancetraderbot.structures;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-public class PriceInfo {
-    private final Instant instant;
-    private final BigDecimal price;
+public final class PriceInfo {
+    private final Instant instant = Instant.now();
+    private final BigDecimal bestBidPrice;
+    private final BigDecimal bestBidQuantity;
+    private final BigDecimal bestAskPrice;
+    private final BigDecimal bestAskQuantity;
 
-    public PriceInfo(BigDecimal price) {
-        this.instant = Instant.now();
-        this.price = price;
+    public PriceInfo(BigDecimal bestBidPrice,
+                     BigDecimal bestBidQuantity,
+                     BigDecimal bestAskPrice,
+                     BigDecimal bestAskQuantity) {
+        this.bestBidPrice = bestBidPrice;
+        this.bestBidQuantity = bestBidQuantity;
+        this.bestAskPrice = bestAskPrice;
+        this.bestAskQuantity = bestAskQuantity;
     }
 
-    public Instant getInstant() {
+    public final Instant getInstant() {
         return instant;
     }
 
-    public BigDecimal getPrice() {
-        return price;
+    public final BigDecimal getBestBidPrice() {
+        return bestBidPrice;
+    }
+
+    public final BigDecimal getBestBidQuantity() {
+        return bestBidQuantity;
+    }
+
+    public final BigDecimal getBestAskPrice() {
+        return bestAskPrice;
+    }
+
+    public final BigDecimal getBestAskQuantity() {
+        return bestAskQuantity;
     }
 }

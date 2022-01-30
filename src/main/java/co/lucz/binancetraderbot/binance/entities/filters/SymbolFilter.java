@@ -11,7 +11,6 @@ import co.lucz.binancetraderbot.binance.entities.filters.symbol.MaxPosition;
 import co.lucz.binancetraderbot.binance.entities.filters.symbol.MinNotional;
 import co.lucz.binancetraderbot.binance.entities.filters.symbol.PercentPrice;
 import co.lucz.binancetraderbot.binance.entities.filters.symbol.PriceFilter;
-import co.lucz.binancetraderbot.binance.exceptions.InvalidFilterTypeException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -72,7 +71,7 @@ public abstract class SymbolFilter {
                 return new MaxPosition(new BigDecimal(jsonObject.getString("maxPosition")));
 
             default:
-                throw new InvalidFilterTypeException();
+                throw new IllegalArgumentException("invalid filter type");
         }
     }
 

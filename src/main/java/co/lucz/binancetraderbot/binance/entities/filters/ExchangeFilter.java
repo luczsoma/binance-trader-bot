@@ -1,10 +1,8 @@
 package co.lucz.binancetraderbot.binance.entities.filters;
 
-import co.lucz.binancetraderbot.binance.entities.RateLimit;
 import co.lucz.binancetraderbot.binance.entities.enums.FilterTypeExchange;
 import co.lucz.binancetraderbot.binance.entities.filters.exchange.ExchangeMaxNumAlgoOrders;
 import co.lucz.binancetraderbot.binance.entities.filters.exchange.ExchangeMaxNumOrders;
-import co.lucz.binancetraderbot.binance.exceptions.InvalidFilterTypeException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -33,7 +31,7 @@ public abstract class ExchangeFilter {
                 );
 
             default:
-                throw new InvalidFilterTypeException();
+                throw new IllegalArgumentException("invalid filter type");
         }
     }
 
