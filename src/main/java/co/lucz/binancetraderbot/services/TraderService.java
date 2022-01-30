@@ -45,9 +45,13 @@ public class TraderService {
 
     private final AtomicBoolean temporaryTradingLock = new AtomicBoolean();
 
+    public boolean getGlobalTradingLock() {
+        return this.globalTradingLockRepository.count() > 0;
+    }
+
     public void setGlobalTradingLock(SetGlobalTradingLockRequest request) {
         boolean lockTargetValue = request.getLockTargetValue();
-        boolean lockActualValue = this.globalTradingLockRepository.count() > 0;
+        boolean lockActualValue = this.getGlobalTradingLock();
 
         if (lockTargetValue) {
             if (!lockActualValue) {
@@ -99,13 +103,16 @@ public class TraderService {
                 PriceInfo latestPriceInfo = new PriceInfo(bestBidPrice, bestBidQuantity, bestAskPrice, bestAskQuantity);
                 List<PriceInfo> priceInfos = this.updatePriceInfos(symbolId, latestPriceInfo);
 
-                if (this.temporaryTradingLock.compareAndSet(false, true)) {
-                    try {
-                        strategy.act(symbolId, priceInfos);
-                    } catch (Exception e) {
-                        this.errorLoggerService.logThrowable(e);
-                    } finally {
-                        this.temporaryTradingLock.set(false);
+                boolean isGlobalTradingLocked = this.getGlobalTradingLock();
+                if (!isGlobalTradingLocked) {
+                    if (this.temporaryTradingLock.compareAndSet(false, true)) {
+                        try {
+                            strategy.act(symbolId, priceInfos);
+                        } catch (Exception e) {
+                            this.errorLoggerService.logThrowable(e);
+                        } finally {
+                            this.temporaryTradingLock.set(false);
+                        }
                     }
                 }
             });
