@@ -4,15 +4,16 @@ import co.lucz.binancetraderbot.exceptions.internal.BadRequestException;
 import co.lucz.binancetraderbot.exceptions.internal.ClockDiscrepancyException;
 import co.lucz.binancetraderbot.exceptions.internal.MethodNotAllowedException;
 import co.lucz.binancetraderbot.exceptions.internal.UnauthorizedException;
+import co.lucz.binancetraderbot.services.ErrorLoggerService;
 import org.springframework.beans.ConversionNotSupportedException;
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -31,6 +32,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+    @Autowired
+    private ErrorLoggerService errorLoggerService;
+
     @ExceptionHandler({BadRequestException.class})
     public ResponseEntity<Object> handleBadRequestException(
             BadRequestException exception,
@@ -278,6 +282,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     protected ResponseEntity<Object> handleApiError(ApiError apiError) {
         logger.warn(apiError.getErrorCode(), apiError.getCause());
+        this.errorLoggerService.logThrowable(apiError.getCause());
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

@@ -1,19 +1,24 @@
 package co.lucz.binancetraderbot.services;
 
+import co.lucz.binancetraderbot.binance.BinanceClient;
 import co.lucz.binancetraderbot.entities.TradingConfiguration;
+import co.lucz.binancetraderbot.exceptions.internal.BadRequestException;
+import co.lucz.binancetraderbot.helpers.SymbolHelpers;
+import co.lucz.binancetraderbot.methods.entities.requests.CreateTradingConfigurationRequest;
+import co.lucz.binancetraderbot.methods.entities.requests.EditTradingConfigurationRequest;
 import co.lucz.binancetraderbot.repositories.TradingConfigurationRepository;
 import co.lucz.binancetraderbot.strategies.BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy;
 import co.lucz.binancetraderbot.strategies.TradingStrategy;
-import co.lucz.binancetraderbot.strategies.TradingStrategyId;
+import co.lucz.binancetraderbot.strategies.TradingStrategyName;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +28,9 @@ public class ConfigurationRepositoryService {
     @Autowired
     private TradingConfigurationRepository tradingConfigurationRepository;
 
+    @Autowired
+    private BinanceClient binanceClient;
+
     public Map<String, TradingStrategy> getTradingStrategies() {
         return tradingStrategyBySymbolId;
     }
@@ -30,7 +38,8 @@ public class ConfigurationRepositoryService {
     public void refreshConfiguration() {
         this.tradingConfigurationRepository.findAll().forEach(tradingConfiguration -> {
             String symbolId = tradingConfiguration.getSymbolId();
-            TradingStrategy tradingStrategy = this.getTradingStrategy(tradingConfiguration);
+            TradingStrategy tradingStrategy = this.getValidTradingStrategy(tradingConfiguration.getTradingStrategyName(),
+                                                                           tradingConfiguration.getTradingStrategyConfiguration());
             this.tradingStrategyBySymbolId.put(symbolId, tradingStrategy);
         });
     }
@@ -43,19 +52,75 @@ public class ConfigurationRepositoryService {
         );
     }
 
-    private TradingStrategy getTradingStrategy(TradingConfiguration tradingConfiguration) {
-        String tradingStrategyConfigurationJsonString = tradingConfiguration.getTradingStrategyConfigurationJson();
-        JSONObject tradingStrategyConfigurationJson = new JSONObject(tradingStrategyConfigurationJsonString);
+    public void createTradingConfiguration(CreateTradingConfigurationRequest request) {
+        String symbolId = request.getSymbolId();
+        this.validateSymbol(symbolId);
 
-        TradingStrategyId tradingStrategyId = tradingConfiguration.getTradingStrategyId();
-        switch (tradingStrategyId) {
-            case BUY_ON_PERCENTAGE_DECREASE_IN_TIMEFRAME_AND_SET_LIMIT_ORDER:
-                return new BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy(
-                        Duration.ofSeconds(tradingStrategyConfigurationJson.getLong("priceMonitorWindowSeconds")),
-                        new BigDecimal(tradingStrategyConfigurationJson.getString("priceDecreaseTriggerRatio")),
-                        new BigDecimal(tradingStrategyConfigurationJson.getString("buySpendAmount")),
-                        new BigDecimal(tradingStrategyConfigurationJson.getString("limitSellPriceRatio"))
-                );
+        TradingStrategyName tradingStrategyName = this.validateTradingStrategyIdentifier(request.getTradingStrategyIdentifier());
+
+        String tradingStrategyConfiguration = request.getTradingStrategyConfiguration();
+        this.validateTradingStrategyConfiguration(tradingStrategyName, tradingStrategyConfiguration);
+
+        TradingConfiguration tradingConfiguration = new TradingConfiguration(symbolId,
+                                                                             tradingStrategyName,
+                                                                             tradingStrategyConfiguration);
+        this.tradingConfigurationRepository.save(tradingConfiguration);
+    }
+
+    public void editTradingConfiguration(EditTradingConfigurationRequest request) {
+        long tradingConfigurationId = request.getTradingConfigurationId();
+        TradingConfiguration tradingConfiguration = this.tradingConfigurationRepository.findById(tradingConfigurationId)
+                .orElseThrow(() -> new BadRequestException("invalid trading configuration id"));
+
+        String symbolId = request.getSymbolId();
+        this.validateSymbol(symbolId);
+
+        TradingStrategyName tradingStrategyName = this.validateTradingStrategyIdentifier(request.getTradingStrategyIdentifier());
+
+        String tradingStrategyConfiguration = request.getTradingStrategyConfiguration();
+        this.validateTradingStrategyConfiguration(tradingStrategyName, tradingStrategyConfiguration);
+
+        tradingConfiguration.setSymbolId(symbolId);
+        tradingConfiguration.setTradingStrategyName(tradingStrategyName);
+        tradingConfiguration.setTradingStrategyConfiguration(tradingStrategyConfiguration);
+
+        this.tradingConfigurationRepository.save(tradingConfiguration);
+    }
+
+    private TradingStrategyName validateTradingStrategyIdentifier(String tradingStrategyIdentifier) {
+        try {
+            return TradingStrategyName.valueOf(tradingStrategyIdentifier);
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("invalid trading strategy identifier");
+        }
+    }
+
+    private void validateSymbol(String symbolId) {
+        String symbol = SymbolHelpers.getSymbol(symbolId);
+        try {
+            this.binanceClient.getExchangeInfo(Set.of(symbol));
+        } catch (Exception ex) {
+            throw new BadRequestException("invalid symbol id");
+        }
+    }
+
+    private void validateTradingStrategyConfiguration(TradingStrategyName tradingStrategyName,
+                                                      String tradingStrategyConfiguration) {
+        try {
+            this.getValidTradingStrategy(tradingStrategyName, tradingStrategyConfiguration);
+        } catch (Exception ex) {
+            throw new BadRequestException("invalid trading strategy configuration");
+        }
+    }
+
+    private TradingStrategy getValidTradingStrategy(TradingStrategyName tradingStrategyName,
+                                                    String tradingStrategyConfiguration) {
+        JSONObject tradingStrategyConfigurationJson = new JSONObject(tradingStrategyConfiguration);
+
+        switch (tradingStrategyName) {
+            case BuyOnPercentageDecreaseInTimeframeAndSetLimitOrder:
+                return BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy.ofTradingStrategyConfigurationJson(
+                        tradingStrategyConfigurationJson);
 
             default:
                 throw new IllegalArgumentException("invalid trading strategy");

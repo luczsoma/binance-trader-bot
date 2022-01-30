@@ -1,6 +1,6 @@
 package co.lucz.binancetraderbot.entities;
 
-import co.lucz.binancetraderbot.strategies.TradingStrategyId;
+import co.lucz.binancetraderbot.strategies.TradingStrategyName;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -16,19 +16,19 @@ public class TradingConfiguration {
     @Column(unique = true)
     private String symbolId;
 
-    private TradingStrategyId tradingStrategyId;
+    private TradingStrategyName tradingStrategyName;
 
-    private String tradingStrategyConfigurationJson;
+    private String tradingStrategyConfiguration;
 
     public TradingConfiguration() {
     }
 
     public TradingConfiguration(String symbolId,
-                                TradingStrategyId tradingStrategyId,
-                                String tradingStrategyConfigurationJson) {
+                                TradingStrategyName tradingStrategyName,
+                                String tradingStrategyConfiguration) {
         this.symbolId = symbolId;
-        this.tradingStrategyId = tradingStrategyId;
-        this.tradingStrategyConfigurationJson = tradingStrategyConfigurationJson;
+        this.tradingStrategyName = tradingStrategyName;
+        this.tradingStrategyConfiguration = tradingStrategyConfiguration;
     }
 
     public String getSymbolId() {
@@ -39,19 +39,19 @@ public class TradingConfiguration {
         this.symbolId = symbolId;
     }
 
-    public TradingStrategyId getTradingStrategyId() {
-        return tradingStrategyId;
+    public TradingStrategyName getTradingStrategyName() {
+        return tradingStrategyName;
     }
 
-    public void setTradingStrategyId(TradingStrategyId tradingStrategyId) {
-        this.tradingStrategyId = tradingStrategyId;
+    public void setTradingStrategyName(TradingStrategyName tradingStrategyName) {
+        this.tradingStrategyName = tradingStrategyName;
     }
 
-    public String getTradingStrategyConfigurationJson() {
-        return tradingStrategyConfigurationJson;
+    public String getTradingStrategyConfiguration() {
+        return tradingStrategyConfiguration;
     }
 
-    public void setTradingStrategyConfigurationJson(String tradingStrategyConfigurationJson) {
-        this.tradingStrategyConfigurationJson = tradingStrategyConfigurationJson;
+    public void setTradingStrategyConfiguration(String tradingStrategyConfiguration) {
+        this.tradingStrategyConfiguration = tradingStrategyConfiguration;
     }
 }

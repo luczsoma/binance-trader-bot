@@ -1,9 +1,11 @@
 package co.lucz.binancetraderbot.strategies;
 
+import co.lucz.binancetraderbot.binance.entities.Balance;
 import co.lucz.binancetraderbot.binance.entities.OrderFill;
-import co.lucz.binancetraderbot.binance.entities.OrderResponse;
+import co.lucz.binancetraderbot.binance.entities.NewOrderResponse;
 import co.lucz.binancetraderbot.helpers.SymbolHelpers;
 import co.lucz.binancetraderbot.structures.PriceInfo;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +31,37 @@ public class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends 
         this.priceDecreaseTriggerRatio = priceDecreaseTriggerRatio;
         this.buySpendAmount = buySpendAmount;
         this.limitSellPriceRatio = limitSellPriceRatio;
+    }
+
+    public static BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy ofTradingStrategyConfigurationJson(JSONObject tradingStrategyConfigurationJson) {
+        Duration priceMonitorWindow = Duration.ofSeconds(tradingStrategyConfigurationJson.getLong(
+                "priceMonitorWindowSeconds"));
+        if (priceMonitorWindow.isZero() || priceMonitorWindow.isNegative()) {
+            throw new IllegalArgumentException("price monitor window must be greater than zero");
+        }
+
+        BigDecimal priceDecreaseTriggerRatio = new BigDecimal(tradingStrategyConfigurationJson.getString(
+                "priceDecreaseTriggerRatio"));
+        if (priceDecreaseTriggerRatio.signum() <= 0) {
+            throw new IllegalArgumentException("price decrease trigger ratio must be greater than zero");
+        }
+
+        BigDecimal buySpendAmount = new BigDecimal(tradingStrategyConfigurationJson.getString("buySpendAmount"));
+        if (buySpendAmount.signum() <= 0) {
+            throw new IllegalArgumentException("buy spend amount must be greater than zero");
+        }
+
+        BigDecimal limitSellPriceRatio = new BigDecimal(tradingStrategyConfigurationJson.getString("limitSellPriceRatio"));
+        if (limitSellPriceRatio.signum() <= 0) {
+            throw new IllegalArgumentException("limit sell price ratio must be greater than zero");
+        }
+
+        return new BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy(
+                priceMonitorWindow,
+                priceDecreaseTriggerRatio,
+                buySpendAmount,
+                limitSellPriceRatio
+        );
     }
 
     @Override
@@ -71,10 +104,9 @@ public class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends 
 
     private boolean hasEnoughQuoteBalance(String symbolId) {
         String quoteAsset = SymbolHelpers.getQuoteAsset(symbolId);
-        BigDecimal freeBalance = this.getBinanceClient().getFreeBalance(quoteAsset);
-        boolean hasEnoughQuoteBalance = freeBalance.compareTo(this.buySpendAmount) > 0;
+        Balance balance = this.getBinanceClient().getBalance(quoteAsset);
+        boolean hasEnoughQuoteBalance = balance != null && balance.getFree().compareTo(this.buySpendAmount) > 0;
 
-        this.logger.debug("{} freeBalance = {}", quoteAsset, freeBalance);
         this.logger.debug("hasEnoughQuoteBalance = {}", hasEnoughQuoteBalance);
 
         return hasEnoughQuoteBalance;
@@ -84,8 +116,8 @@ public class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends 
         String symbol = SymbolHelpers.getSymbol(symbolId);
 
         this.logger.debug("symbol = {}", symbol);
-        OrderResponse marketBuyResponse = this.getBinanceClient().marketBuyBySpend(symbol.toUpperCase(),
-                                                                                   this.buySpendAmount);
+        NewOrderResponse marketBuyResponse = this.getBinanceClient().marketBuyBySpend(symbol.toUpperCase(),
+                                                                                      this.buySpendAmount);
         this.logger.debug("marketBuyResponse.status = {}", marketBuyResponse.getStatus().toString());
         this.logger.debug("marketBuyResponse.executedQuantity = {}", marketBuyResponse.getExecutedQty());
 
@@ -101,9 +133,9 @@ public class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends 
         BigDecimal limitSellPrice = minFilledPrice.multiply(limitSellPriceMultiplier);
         this.logger.debug("limitSellPrice = {}", limitSellPrice);
 
-        OrderResponse limitSellResponse = this.getBinanceClient().limitSellByQuantity(symbol.toUpperCase(),
-                                                                                      marketBuyResponse.getExecutedQty(),
-                                                                                      limitSellPrice);
+        NewOrderResponse limitSellResponse = this.getBinanceClient().limitSellByQuantity(symbol.toUpperCase(),
+                                                                                         marketBuyResponse.getExecutedQty(),
+                                                                                         limitSellPrice);
         this.logger.debug("limitSellResponse.status = {}", limitSellResponse.getStatus().toString());
     }
 }

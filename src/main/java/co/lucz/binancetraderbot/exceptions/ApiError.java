@@ -21,8 +21,6 @@ public final class ApiError {
 
     private ApiError.ApiErrorCode errorCode;
 
-    private RetryInformation retryInformation;
-
     @JsonIgnore
     private Throwable cause;
 
@@ -33,13 +31,6 @@ public final class ApiError {
     public ApiError(ApiErrorCode errorCode, Throwable cause) {
         this.errorCode = Optional.ofNullable(errorCode).orElse(ApiErrorCode.InternalServerError);
         this.cause = cause;
-        retryInformation = null;
-    }
-
-    public ApiError(ApiErrorCode errorCode, Throwable cause, RetryInformation retryInformation) {
-        this.errorCode = Optional.ofNullable(errorCode).orElse(ApiErrorCode.InternalServerError);
-        this.cause = cause;
-        this.retryInformation = retryInformation;
     }
 
     public ApiErrorCode getErrorCode() {
@@ -50,16 +41,8 @@ public final class ApiError {
         return cause;
     }
 
-    public RetryInformation getRetryInformation() {
-        return retryInformation;
-    }
-
     public void setErrorCode(ApiErrorCode errorCode) {
         this.errorCode = errorCode;
-    }
-
-    public void setRetryInformation(RetryInformation retryInformation) {
-        this.retryInformation = retryInformation;
     }
 
     public void setCause(Throwable cause) {

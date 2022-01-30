@@ -9,7 +9,7 @@ import org.json.JSONObject;
 import java.math.BigDecimal;
 import java.util.List;
 
-public final class OrderResponse {
+public final class NewOrderResponse {
     private final String symbol;
     private final long orderId;
     private final long orderListId;
@@ -25,20 +25,20 @@ public final class OrderResponse {
     private final OrderType type;
     private final List<OrderFill> fills;
 
-    private OrderResponse(String symbol,
-                          long orderId,
-                          long orderListId,
-                          String clientOrderId,
-                          long transactTime,
-                          BigDecimal price,
-                          BigDecimal origQty,
-                          BigDecimal executedQty,
-                          BigDecimal cummulativeQuoteQty,
-                          OrderStatus status,
-                          TimeInForce timeInForce,
-                          OrderType type,
-                          OrderSide side,
-                          List<OrderFill> fills) {
+    private NewOrderResponse(String symbol,
+                             long orderId,
+                             long orderListId,
+                             String clientOrderId,
+                             long transactTime,
+                             BigDecimal price,
+                             BigDecimal origQty,
+                             BigDecimal executedQty,
+                             BigDecimal cummulativeQuoteQty,
+                             OrderStatus status,
+                             TimeInForce timeInForce,
+                             OrderType type,
+                             OrderSide side,
+                             List<OrderFill> fills) {
         this.symbol = symbol;
         this.orderId = orderId;
         this.orderListId = orderListId;
@@ -55,8 +55,8 @@ public final class OrderResponse {
         this.fills = fills;
     }
 
-    public static OrderResponse of(JSONObject jsonObject) {
-        return new OrderResponse(
+    public static NewOrderResponse of(JSONObject jsonObject) {
+        return new NewOrderResponse(
                 jsonObject.getString("symbol"),
                 jsonObject.getLong("orderId"),
                 jsonObject.getLong("orderListId"),

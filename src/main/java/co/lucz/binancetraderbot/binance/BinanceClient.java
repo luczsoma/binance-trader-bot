@@ -1,7 +1,9 @@
 package co.lucz.binancetraderbot.binance;
 
+import co.lucz.binancetraderbot.binance.entities.Balance;
 import co.lucz.binancetraderbot.binance.entities.ExchangeInfo;
-import co.lucz.binancetraderbot.binance.entities.OrderResponse;
+import co.lucz.binancetraderbot.binance.entities.NewOrderResponse;
+import co.lucz.binancetraderbot.binance.entities.OpenOrderResponse;
 import co.lucz.binancetraderbot.binance.entities.Symbol;
 import co.lucz.binancetraderbot.binance.entities.enums.FilterTypeSymbol;
 import co.lucz.binancetraderbot.binance.entities.enums.OrderResponseType;
@@ -28,6 +30,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -84,14 +87,18 @@ public class BinanceClient {
 
     public void cacheExchangeInfo(Set<String> symbols) {
         if (this.exchangeInfo == null || !this.exchangeInfo.getSymbols().keySet().equals(symbols)) {
-            LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-            if (!symbols.isEmpty()) {
-                parameters.put("symbols", new ArrayList<>(symbols));
-            }
-            String response = this.getMarket().exchangeInfo(parameters);
-            JSONObject responseJson = new JSONObject(response);
-            this.exchangeInfo = ExchangeInfo.of(responseJson);
+            this.exchangeInfo = this.getExchangeInfo(symbols);
         }
+    }
+
+    public ExchangeInfo getExchangeInfo(Set<String> symbols) {
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+        if (!symbols.isEmpty()) {
+            parameters.put("symbols", new ArrayList<>(symbols));
+        }
+        String response = this.getMarket().exchangeInfo(parameters);
+        JSONObject responseJson = new JSONObject(response);
+        return ExchangeInfo.of(responseJson);
     }
 
     public void bookTicker(String symbol, WebSocketCallback callback) {
@@ -117,7 +124,7 @@ public class BinanceClient {
         return openOrdersOnSymbol.length() > 0;
     }
 
-    public OrderResponse marketBuyBySpend(String symbol, BigDecimal amountToSpend) {
+    public NewOrderResponse marketBuyBySpend(String symbol, BigDecimal amountToSpend) {
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
         parameters.put("symbol", symbol);
         parameters.put("side", OrderSide.BUY.toString());
@@ -126,10 +133,10 @@ public class BinanceClient {
         parameters.put("newOrderRespType", OrderResponseType.FULL.toString());
         String response = this.getTrade().newOrder(parameters);
         JSONObject responseJson = new JSONObject(response);
-        return OrderResponse.of(responseJson);
+        return NewOrderResponse.of(responseJson);
     }
 
-    public OrderResponse limitSellByQuantity(String symbol, BigDecimal quantity, BigDecimal price) {
+    public NewOrderResponse limitSellByQuantity(String symbol, BigDecimal quantity, BigDecimal price) {
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
         parameters.put("symbol", symbol);
         parameters.put("side", OrderSide.SELL.toString());
@@ -140,24 +147,27 @@ public class BinanceClient {
         parameters.put("newOrderRespType", OrderResponseType.FULL.toString());
         String response = this.getTrade().newOrder(parameters);
         JSONObject responseJson = new JSONObject(response);
-        return OrderResponse.of(responseJson);
+        return NewOrderResponse.of(responseJson);
     }
 
-    public BigDecimal getFreeBalance(String asset) {
+    public Map<String, Balance> getBalances() {
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
         String response = this.getTrade().account(parameters);
         JSONObject responseJson = new JSONObject(response);
-        JSONArray balances = responseJson.getJSONArray("balances");
+        JSONArray balancesJson = responseJson.getJSONArray("balances");
+        return Balance.of(balancesJson);
+    }
 
-        for (int i = 0; i < balances.length(); i++) {
-            JSONObject balanceJson = balances.getJSONObject(i);
-            String assetName = balanceJson.getString("asset");
-            if (assetName.equals(asset.toUpperCase())) {
-                return new BigDecimal(balanceJson.getString("free"));
-            }
-        }
+    public Balance getBalance(String asset) {
+        Map<String, Balance> balances = this.getBalances();
+        return balances.get(asset);
+    }
 
-        return BigDecimal.ZERO;
+    public List<OpenOrderResponse> getOpenOrders() {
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+        String response = this.getTrade().getOpenOrders(parameters);
+        JSONArray openOrders = new JSONArray(response);
+        return OpenOrderResponse.of(openOrders);
     }
 
     private String validateQuantity(String symbol, BigDecimal quantity) {

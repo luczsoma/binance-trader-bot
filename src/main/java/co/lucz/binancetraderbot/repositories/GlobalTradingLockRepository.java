@@ -1,9 +1,9 @@
 package co.lucz.binancetraderbot.repositories;
 
-import co.lucz.binancetraderbot.entities.TradingConfiguration;
+import co.lucz.binancetraderbot.entities.GlobalTradingLock;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface TradingConfigurationRepository extends CrudRepository<TradingConfiguration, Long> {
+public interface GlobalTradingLockRepository extends CrudRepository<GlobalTradingLock, Long> {
 }

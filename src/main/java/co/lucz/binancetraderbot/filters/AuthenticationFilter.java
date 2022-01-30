@@ -15,14 +15,26 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Set;
+import java.util.function.Predicate;
 
 @Component
 public class AuthenticationFilter extends JsonResponseWritingFilter {
+    private final Set<Predicate<HttpServletRequest>> shouldNotFilterOnAny = Set.of(
+            request -> request.getServletPath().startsWith("/h2-console"),
+            request -> request.getServletPath().equals("/favicon.ico")
+    );
+
     @Autowired
     private AuthenticationService authenticationService;
 
     @Autowired
     private GlobalExceptionHandler globalExceptionHandler;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        return shouldNotFilterOnAny.stream().anyMatch(predicate -> predicate.test(request));
+    }
 
     @Override
     public void doFilterInternal(
@@ -32,6 +44,13 @@ public class AuthenticationFilter extends JsonResponseWritingFilter {
     ) throws IOException, ServletException {
         try {
             attemptAuthentication(request);
+        } catch (BadRequestException ex) {
+            ResponseEntity<Object> responseEntity = globalExceptionHandler.handleBadRequestException(
+                    ex,
+                    new ServletWebRequest(request)
+            );
+            writeJsonResponse(response, responseEntity);
+            return;
         } catch (UnauthorizedException ex) {
             ResponseEntity<Object> responseEntity = globalExceptionHandler.handleUnauthorizedException(
                     ex,

@@ -1,7 +1,12 @@
 package co.lucz.binancetraderbot.services;
 
 import co.lucz.binancetraderbot.binance.BinanceClient;
+import co.lucz.binancetraderbot.binance.entities.Balance;
+import co.lucz.binancetraderbot.binance.entities.OpenOrderResponse;
+import co.lucz.binancetraderbot.entities.GlobalTradingLock;
 import co.lucz.binancetraderbot.helpers.SymbolHelpers;
+import co.lucz.binancetraderbot.methods.entities.requests.SetGlobalTradingLockRequest;
+import co.lucz.binancetraderbot.repositories.GlobalTradingLockRepository;
 import co.lucz.binancetraderbot.strategies.TradingStrategy;
 import co.lucz.binancetraderbot.structures.PriceInfo;
 import org.json.JSONObject;
@@ -30,9 +35,36 @@ public class TraderService {
     @Autowired
     private ConfigurationRepositoryService configurationRepositoryService;
 
+    @Autowired
+    private ErrorLoggerService errorLoggerService;
+
+    @Autowired
+    private GlobalTradingLockRepository globalTradingLockRepository;
+
     private final Map<String, List<PriceInfo>> priceInfosBySymbolId = new HashMap<>();
 
-    private final AtomicBoolean tradeLock = new AtomicBoolean();
+    private final AtomicBoolean temporaryTradingLock = new AtomicBoolean();
+
+    public void setGlobalTradingLock(SetGlobalTradingLockRequest request) {
+        boolean lockTargetValue = request.getLockTargetValue();
+        boolean lockActualValue = this.globalTradingLockRepository.count() > 0;
+
+        if (lockTargetValue) {
+            if (!lockActualValue) {
+                this.globalTradingLockRepository.save(new GlobalTradingLock());
+            }
+        } else {
+            this.globalTradingLockRepository.deleteAll();
+        }
+    }
+
+    public List<OpenOrderResponse> getCurrentOpenOrders() {
+        return this.binanceClient.getOpenOrders();
+    }
+
+    public List<Balance> getBalances() {
+        return new ArrayList<>(this.binanceClient.getBalances().values());
+    }
 
     @PostConstruct
     private void doTrading() {
@@ -67,9 +99,14 @@ public class TraderService {
                 PriceInfo latestPriceInfo = new PriceInfo(bestBidPrice, bestBidQuantity, bestAskPrice, bestAskQuantity);
                 List<PriceInfo> priceInfos = this.updatePriceInfos(symbolId, latestPriceInfo);
 
-                if (this.tradeLock.compareAndSet(false, true)) {
-                    strategy.act(symbolId, priceInfos);
-                    this.tradeLock.set(false);
+                if (this.temporaryTradingLock.compareAndSet(false, true)) {
+                    try {
+                        strategy.act(symbolId, priceInfos);
+                    } catch (Exception e) {
+                        this.errorLoggerService.logThrowable(e);
+                    } finally {
+                        this.temporaryTradingLock.set(false);
+                    }
                 }
             });
         });
