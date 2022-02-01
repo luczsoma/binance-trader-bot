@@ -32,10 +32,16 @@ public class ConfigurationRepositoryService {
     private BinanceClient binanceClient;
 
     public Map<String, TradingStrategy> getTradingStrategies() {
+        if  (this.tradingStrategyBySymbolId.isEmpty()) {
+            this.refreshConfiguration();
+        }
+
         return tradingStrategyBySymbolId;
     }
 
-    public void refreshConfiguration() {
+    private void refreshConfiguration() {
+        this.tradingStrategyBySymbolId.clear();
+
         this.tradingConfigurationRepository.findAll().forEach(tradingConfiguration -> {
             String symbolId = tradingConfiguration.getSymbolId();
             TradingStrategy tradingStrategy = this.getValidTradingStrategy(tradingConfiguration.getTradingStrategyName(),
@@ -65,6 +71,7 @@ public class ConfigurationRepositoryService {
                                                                              tradingStrategyName,
                                                                              tradingStrategyConfiguration);
         this.tradingConfigurationRepository.save(tradingConfiguration);
+        this.refreshConfiguration();
     }
 
     public void editTradingConfiguration(EditTradingConfigurationRequest request) {
@@ -85,6 +92,7 @@ public class ConfigurationRepositoryService {
         tradingConfiguration.setTradingStrategyConfiguration(tradingStrategyConfiguration);
 
         this.tradingConfigurationRepository.save(tradingConfiguration);
+        this.refreshConfiguration();
     }
 
     private TradingStrategyName validateTradingStrategyIdentifier(String tradingStrategyIdentifier) {

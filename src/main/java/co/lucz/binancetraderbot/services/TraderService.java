@@ -5,6 +5,8 @@ import co.lucz.binancetraderbot.binance.entities.Balance;
 import co.lucz.binancetraderbot.binance.entities.OpenOrderResponse;
 import co.lucz.binancetraderbot.entities.GlobalTradingLock;
 import co.lucz.binancetraderbot.helpers.SymbolHelpers;
+import co.lucz.binancetraderbot.methods.entities.requests.CreateTradingConfigurationRequest;
+import co.lucz.binancetraderbot.methods.entities.requests.EditTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.SetGlobalTradingLockRequest;
 import co.lucz.binancetraderbot.repositories.GlobalTradingLockRepository;
 import co.lucz.binancetraderbot.strategies.TradingStrategy;
@@ -45,8 +47,14 @@ public class TraderService {
 
     private final AtomicBoolean temporaryTradingLock = new AtomicBoolean();
 
-    public boolean getGlobalTradingLock() {
-        return this.globalTradingLockRepository.count() > 0;
+    public void createTradingConfiguration(CreateTradingConfigurationRequest request) {
+        this.configurationRepositoryService.createTradingConfiguration(request);
+        this.renewTradingStrategySubscriptions();
+    }
+
+    public void editTradingConfiguration(EditTradingConfigurationRequest request) {
+        this.configurationRepositoryService.editTradingConfiguration(request);
+        this.renewTradingStrategySubscriptions();
     }
 
     public void setGlobalTradingLock(SetGlobalTradingLockRequest request) {
@@ -71,8 +79,7 @@ public class TraderService {
     }
 
     @PostConstruct
-    private void doTrading() {
-        this.configurationRepositoryService.refreshConfiguration();
+    private void initializeTrading() {
         Map<String, TradingStrategy> tradingStrategies = this.configurationRepositoryService.getTradingStrategies();
         Set<String> symbols = tradingStrategies.keySet().stream()
                 .map(SymbolHelpers::getSymbol)
@@ -82,7 +89,7 @@ public class TraderService {
     }
 
     @Scheduled(fixedDelay = 23, timeUnit = TimeUnit.HOURS)
-    private void renewBookTickerSubscriptions() {
+    private void renewTradingStrategySubscriptions() {
         this.binanceClient.closeAllWebsocketConnections();
 
         Map<String, TradingStrategy> tradingStrategies = this.configurationRepositoryService.getTradingStrategies();
@@ -130,5 +137,9 @@ public class TraderService {
         this.priceInfosBySymbolId.put(symbolId, priceInfos);
 
         return priceInfos;
+    }
+
+    private boolean getGlobalTradingLock() {
+        return this.globalTradingLockRepository.count() > 0;
     }
 }

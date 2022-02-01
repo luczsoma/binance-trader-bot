@@ -5,7 +5,6 @@ import co.lucz.binancetraderbot.binance.entities.OpenOrderResponse;
 import co.lucz.binancetraderbot.methods.entities.requests.CreateTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.EditTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.SetGlobalTradingLockRequest;
-import co.lucz.binancetraderbot.services.ConfigurationRepositoryService;
 import co.lucz.binancetraderbot.services.TraderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -19,9 +18,6 @@ import java.util.List;
 @RestController
 public class DefaultController {
     @Autowired
-    private ConfigurationRepositoryService configurationRepositoryService;
-
-    @Autowired
     private TraderService traderService;
 
     @RequestMapping(
@@ -31,7 +27,7 @@ public class DefaultController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     public void createTradingConfiguration(@RequestBody CreateTradingConfigurationRequest request) {
-        this.configurationRepositoryService.createTradingConfiguration(request);
+        this.traderService.createTradingConfiguration(request);
     }
 
     @RequestMapping(
@@ -41,7 +37,7 @@ public class DefaultController {
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
     public void editTradingConfiguration(@RequestBody EditTradingConfigurationRequest request) {
-        this.configurationRepositoryService.editTradingConfiguration(request);
+        this.traderService.editTradingConfiguration(request);
     }
 
     @RequestMapping(
