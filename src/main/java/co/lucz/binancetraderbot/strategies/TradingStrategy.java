@@ -12,12 +12,11 @@ public abstract class TradingStrategy {
     private final Duration priceMonitorWindow;
     private BinanceClient binanceClient;
 
-    public TradingStrategy(Duration priceMonitorWindow) {
+    protected TradingStrategy(Duration priceMonitorWindow) {
+        if (priceMonitorWindow.isZero() || priceMonitorWindow.isNegative()) {
+            throw new IllegalArgumentException("price monitor window must be greater than zero");
+        }
         this.priceMonitorWindow = priceMonitorWindow;
-    }
-
-    public static String getSymbol(String baseAsset, String quoteAsset) {
-        return baseAsset + quoteAsset;
     }
 
     public final Duration getPriceMonitorWindow() {

@@ -1,8 +1,8 @@
 package co.lucz.binancetraderbot.strategies;
 
 import co.lucz.binancetraderbot.binance.entities.Balance;
-import co.lucz.binancetraderbot.binance.entities.OrderFill;
 import co.lucz.binancetraderbot.binance.entities.NewOrderResponse;
+import co.lucz.binancetraderbot.binance.entities.OrderFill;
 import co.lucz.binancetraderbot.helpers.SymbolHelpers;
 import co.lucz.binancetraderbot.structures.PriceInfo;
 import org.json.JSONObject;
@@ -23,38 +23,36 @@ public class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends 
     private final BigDecimal buySpendAmount;
     private final BigDecimal limitSellPriceRatio;
 
-    public BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy(Duration priceMonitorWindow,
-                                                                      BigDecimal priceDecreaseTriggerRatio,
-                                                                      BigDecimal buySpendAmount,
-                                                                      BigDecimal limitSellPriceRatio) {
+    private BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy(Duration priceMonitorWindow,
+                                                                       BigDecimal priceDecreaseTriggerRatio,
+                                                                       BigDecimal buySpendAmount,
+                                                                       BigDecimal limitSellPriceRatio) {
         super(priceMonitorWindow);
-        this.priceDecreaseTriggerRatio = priceDecreaseTriggerRatio;
-        this.buySpendAmount = buySpendAmount;
-        this.limitSellPriceRatio = limitSellPriceRatio;
-    }
 
-    public static BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy ofTradingStrategyConfigurationJson(JSONObject tradingStrategyConfigurationJson) {
-        Duration priceMonitorWindow = Duration.ofSeconds(tradingStrategyConfigurationJson.getLong(
-                "priceMonitorWindowSeconds"));
-        if (priceMonitorWindow.isZero() || priceMonitorWindow.isNegative()) {
-            throw new IllegalArgumentException("price monitor window must be greater than zero");
-        }
-
-        BigDecimal priceDecreaseTriggerRatio = new BigDecimal(tradingStrategyConfigurationJson.getString(
-                "priceDecreaseTriggerRatio"));
         if (priceDecreaseTriggerRatio.signum() <= 0) {
             throw new IllegalArgumentException("price decrease trigger ratio must be greater than zero");
         }
+        this.priceDecreaseTriggerRatio = priceDecreaseTriggerRatio;
 
-        BigDecimal buySpendAmount = new BigDecimal(tradingStrategyConfigurationJson.getString("buySpendAmount"));
         if (buySpendAmount.signum() <= 0) {
             throw new IllegalArgumentException("buy spend amount must be greater than zero");
         }
+        this.buySpendAmount = buySpendAmount;
 
-        BigDecimal limitSellPriceRatio = new BigDecimal(tradingStrategyConfigurationJson.getString("limitSellPriceRatio"));
         if (limitSellPriceRatio.signum() <= 0) {
             throw new IllegalArgumentException("limit sell price ratio must be greater than zero");
         }
+        this.limitSellPriceRatio = limitSellPriceRatio;
+    }
+
+    public static BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy ofTradingStrategyConfigurationJson(
+            JSONObject tradingStrategyConfigurationJson) {
+        Duration priceMonitorWindow = Duration.ofSeconds(tradingStrategyConfigurationJson.getLong(
+                "priceMonitorWindowSeconds"));
+        BigDecimal priceDecreaseTriggerRatio = new BigDecimal(tradingStrategyConfigurationJson.getString(
+                "priceDecreaseTriggerRatio"));
+        BigDecimal buySpendAmount = new BigDecimal(tradingStrategyConfigurationJson.getString("buySpendAmount"));
+        BigDecimal limitSellPriceRatio = new BigDecimal(tradingStrategyConfigurationJson.getString("limitSellPriceRatio"));
 
         return new BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy(
                 priceMonitorWindow,
