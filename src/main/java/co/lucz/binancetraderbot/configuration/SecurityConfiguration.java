@@ -106,6 +106,10 @@ public class SecurityConfiguration {
             configureBaselineHttpSecurity(http);
 
             http.headers().contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'none'; " +
+                                                                                     "script-src 'self' 'unsafe-inline'; " +
+                                                                                     "style-src 'self' 'unsafe-inline'; " +
+                                                                                     "img-src 'self' data:; " +
+                                                                                     "connect-src 'self'; " +
                                                                                      "base-uri 'self'; " +
                                                                                      "form-action 'none'; " +
                                                                                      "frame-ancestors 'none';"));

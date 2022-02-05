@@ -61,21 +61,57 @@
             <version>1.2</version>
         </dependency>
     </dependencies>
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>com.squareup.okhttp3</groupId>
-				<artifactId>okhttp</artifactId>
-				<version>4.9.2</version>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>4.9.2</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <build>
         <finalName>binance-trader-bot</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>exec-npm-install</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <workingDirectory>${project.basedir}/frontend/binance-trader-bot-frontend</workingDirectory>
+                            <executable>npm</executable>
+                            <arguments>
+                                <argument>ci</argument>
+                            </arguments>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>exec-npm-ng-build</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <workingDirectory>${project.basedir}/frontend/binance-trader-bot-frontend</workingDirectory>
+                            <executable>npm</executable>
+                            <arguments>
+                                <argument>run</argument>
+                                <argument>build</argument>
+                            </arguments>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

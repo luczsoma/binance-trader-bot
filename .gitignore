@@ -36,3 +36,6 @@ build/
 ### Environment ###
 .env
 *.db
+
+### Angular ###
+src/main/resources/public/
