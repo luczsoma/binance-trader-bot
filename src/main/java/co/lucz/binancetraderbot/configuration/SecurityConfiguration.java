@@ -69,32 +69,46 @@ public class SecurityConfiguration {
     }
 
     @Configuration
+    @Order(2)
     public static class ApiSecurityConfiguration extends WebSecurityConfigurerAdapter {
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+            http.antMatcher("/api/**");
+
+            configureBaselineHttpSecurity(http);
+
+            http.headers().contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'none'; " +
+                                                                                     "base-uri 'self'; " +
+                                                                                     "form-action 'none'; " +
+                                                                                     "frame-ancestors 'none';"));
+
+            http.cors(cors -> {
+                CorsConfigurationSource corsConfigurationSource = httpServletRequest -> {
+                    CorsConfiguration corsConfiguration = new CorsConfiguration();
+
+                    corsConfiguration.setAllowedOrigins(List.of("https://binance-trading-bot.lucz.co"));
+                    corsConfiguration.setAllowedMethods(new ArrayList<>(Methods.AllowedMethods));
+                    corsConfiguration.setAllowedHeaders(new ArrayList<>(Headers.AllowedHeaders));
+                    corsConfiguration.setAllowCredentials(false);
+                    corsConfiguration.setMaxAge(300L);
+                    return corsConfiguration;
+                };
+
+                cors.configurationSource(corsConfigurationSource);
+            });
+        }
+    }
+
+    @Configuration
+    public static class SpaSecurityConfiguration extends WebSecurityConfigurerAdapter {
         @Override
         protected void configure(HttpSecurity http) throws Exception {
             configureBaselineHttpSecurity(http);
 
-            http.headers(headers -> {
-                headers.contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'none'; " +
-                                                                                  "base-uri 'self'; " +
-                                                                                  "form-action 'none'; " +
-                                                                                  "frame-ancestors 'none';"));
-            });
-
-            http.cors(cors -> {
-                CorsConfigurationSource defaultCorsConfigurationSource = httpServletRequest -> {
-                    CorsConfiguration defaultCorsConfiguration = new CorsConfiguration();
-
-                    defaultCorsConfiguration.setAllowedOrigins(List.of("https://trading.lucz.co"));
-                    defaultCorsConfiguration.setAllowedMethods(new ArrayList<>(Methods.AllowedMethods));
-                    defaultCorsConfiguration.setAllowedHeaders(new ArrayList<>(Headers.AllowedHeaders));
-                    defaultCorsConfiguration.setAllowCredentials(false);
-                    defaultCorsConfiguration.setMaxAge(300L);
-                    return defaultCorsConfiguration;
-                };
-
-                cors.configurationSource(defaultCorsConfigurationSource);
-            });
+            http.headers().contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'none'; " +
+                                                                                     "base-uri 'self'; " +
+                                                                                     "form-action 'none'; " +
+                                                                                     "frame-ancestors 'none';"));
         }
     }
 }

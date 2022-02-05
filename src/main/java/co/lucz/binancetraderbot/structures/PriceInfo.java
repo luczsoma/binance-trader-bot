@@ -20,23 +20,23 @@ public final class PriceInfo {
         this.bestAskQuantity = bestAskQuantity;
     }
 
-    public final Instant getInstant() {
+    public Instant getInstant() {
         return instant;
     }
 
-    public final BigDecimal getBestBidPrice() {
+    public BigDecimal getBestBidPrice() {
         return bestBidPrice;
     }
 
-    public final BigDecimal getBestBidQuantity() {
+    public BigDecimal getBestBidQuantity() {
         return bestBidQuantity;
     }
 
-    public final BigDecimal getBestAskPrice() {
+    public BigDecimal getBestAskPrice() {
         return bestAskPrice;
     }
 
-    public final BigDecimal getBestAskQuantity() {
+    public BigDecimal getBestAskQuantity() {
         return bestAskQuantity;
     }
 }

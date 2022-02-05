@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-public class DefaultController {
+@RequestMapping("api")
+public class ApiController {
     @Autowired
     private TraderService traderService;
 

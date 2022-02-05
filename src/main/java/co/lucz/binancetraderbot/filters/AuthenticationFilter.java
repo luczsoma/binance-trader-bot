@@ -21,8 +21,7 @@ import java.util.function.Predicate;
 @Component
 public class AuthenticationFilter extends JsonResponseWritingFilter {
     private final Set<Predicate<HttpServletRequest>> shouldNotFilterOnAny = Set.of(
-            request -> request.getServletPath().startsWith("/h2-console"),
-            request -> request.getServletPath().equals("/favicon.ico")
+            request -> !request.getServletPath().startsWith("/api/")
     );
 
     @Autowired
