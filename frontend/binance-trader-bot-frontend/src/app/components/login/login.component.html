@@ -1,0 +1,43 @@
+<form class="login-form">
+  <p>
+    <mat-form-field class="full-width" appearance="fill">
+      <mat-label>Email-cím</mat-label>
+      <input
+        type="email"
+        matInput
+        [formControl]="emailFormControl"
+        placeholder="Pl. steve@apple.com"
+      />
+      <mat-error
+        *ngIf="
+          emailFormControl.hasError('email') &&
+          !emailFormControl.hasError('required')
+        "
+      >
+        Írjon be <strong>érvényes</strong> email-címet.
+      </mat-error>
+      <mat-error *ngIf="emailFormControl.hasError('required')">
+        Email-címet megadni <strong>kötelező</strong>.
+      </mat-error>
+    </mat-form-field>
+  </p>
+  <p>
+    <mat-form-field class="full-width" appearance="fill">
+      <mat-label>Jelszó</mat-label>
+      <input
+        type="password"
+        matInput
+        [formControl]="passwordFormControl"
+        placeholder="Pl. xSiNoYCdi2auf3MbfD2Usm52Pjq4oIrP"
+      />
+      <mat-error *ngIf="passwordFormControl.hasError('required')">
+        Jeszót megadni <strong>kötelező</strong>.
+      </mat-error>
+    </mat-form-field>
+  </p>
+  <p>
+    <button mat-stroked-button color="primary" (click)="login()">
+      Bejelentkezés
+    </button>
+  </p>
+</form>
