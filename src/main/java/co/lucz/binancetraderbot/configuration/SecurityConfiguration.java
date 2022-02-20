@@ -1,8 +1,7 @@
 package co.lucz.binancetraderbot.configuration;
 
-import co.lucz.binancetraderbot.filters.Headers;
-import co.lucz.binancetraderbot.filters.Methods;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -12,7 +11,6 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @EnableWebSecurity
@@ -53,6 +51,17 @@ public class SecurityConfiguration {
         http.requestCache().disable();
     }
 
+    private static void configureApiHttpSecurity(HttpSecurity http) throws Exception {
+        http.antMatcher("/api/**");
+
+        configureBaselineHttpSecurity(http);
+
+        http.headers().contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'none'; " +
+                                                                                 "base-uri 'self'; " +
+                                                                                 "form-action 'none'; " +
+                                                                                 "frame-ancestors 'none';"));
+    }
+
     @Configuration
     @Order(1)
     public static class H2ConsoleSecurityConfiguration extends WebSecurityConfigurerAdapter {
@@ -70,32 +79,35 @@ public class SecurityConfiguration {
 
     @Configuration
     @Order(2)
-    public static class ApiSecurityConfiguration extends WebSecurityConfigurerAdapter {
+    @Profile("development")
+    public static class DevelopmentApiSecurityConfiguration extends WebSecurityConfigurerAdapter {
         @Override
         protected void configure(HttpSecurity http) throws Exception {
-            http.antMatcher("/api/**");
-
-            configureBaselineHttpSecurity(http);
-
-            http.headers().contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'none'; " +
-                                                                                     "base-uri 'self'; " +
-                                                                                     "form-action 'none'; " +
-                                                                                     "frame-ancestors 'none';"));
+            configureApiHttpSecurity(http);
 
             http.cors(cors -> {
                 CorsConfigurationSource corsConfigurationSource = httpServletRequest -> {
                     CorsConfiguration corsConfiguration = new CorsConfiguration();
-
-                    corsConfiguration.setAllowedOrigins(List.of("https://binance-trading-bot.lucz.co"));
-                    corsConfiguration.setAllowedMethods(new ArrayList<>(Methods.AllowedMethods));
-                    corsConfiguration.setAllowedHeaders(new ArrayList<>(Headers.AllowedHeaders));
-                    corsConfiguration.setAllowCredentials(false);
-                    corsConfiguration.setMaxAge(300L);
+                    corsConfiguration.setAllowedOrigins(List.of("http://localhost:4200"));
+//                    corsConfiguration.setAllowedMethods(new ArrayList<>(Methods.AllowedMethods));
+//                    corsConfiguration.setAllowedHeaders(new ArrayList<>(Headers.AllowedHeaders));
+//                    corsConfiguration.setAllowCredentials(false);
+//                    corsConfiguration.setMaxAge(300L);
                     return corsConfiguration;
                 };
 
                 cors.configurationSource(corsConfigurationSource);
             });
+        }
+    }
+
+    @Configuration
+    @Order(2)
+    @Profile("production")
+    public static class ProductionApiSecurityConfiguration extends WebSecurityConfigurerAdapter {
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+            configureApiHttpSecurity(http);
         }
     }
 
