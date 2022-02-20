@@ -1,46 +1,60 @@
 import { Injectable } from '@angular/core';
-import {
-  BinaryConverter,
-  DefaultBinaryConverter,
-  DefaultStringConverter,
-  StringConverter,
-} from '@diplomatiq/convertibles';
-import { scrypt } from 'scrypt-js';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
+import { ApiException } from '../types/apiException';
+import { CryptoService } from './crypto.service';
+import { StorageService } from './storage.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class LoginService {
-  private readonly localStorageKey = 'binance-trader-bot-key';
+  private readonly loginKeyStorageKey = 'binance-trader-bot-login-key';
 
-  private readonly localStorage: Storage = window.localStorage;
-  private readonly stringConverter: StringConverter =
-    new DefaultStringConverter();
-  private readonly binaryConverter: BinaryConverter =
-    new DefaultBinaryConverter();
+  public constructor(
+    private readonly storageService: StorageService,
+    private readonly cryptoService: CryptoService,
+    private readonly router: Router,
+    private readonly snackBar: MatSnackBar
+  ) {}
 
-  public isLoggedIn(): boolean {
-    return this.getKey() !== '';
+  public async withLoginErrorHandling<T>(cb: () => Promise<T>): Promise<T> {
+    try {
+      return await cb();
+    } catch (ex) {
+      if (ex instanceof ApiException) {
+        if (ex.errorCode === 'Unauthorized') {
+          await this.logout('invalid-credentials');
+        }
+      }
+
+      throw ex;
+    }
   }
 
-  public getKey(): string {
-    return this.localStorage.getItem(this.localStorageKey) ?? '';
+  public isLoggedIn(): boolean {
+    return this.getLoginKey() !== '';
+  }
+
+  public getLoginKey(): string {
+    return this.storageService.get(this.loginKeyStorageKey) ?? '';
   }
 
   public async login(emailAddress: string, password: string): Promise<void> {
-    const keyBinary = await scrypt(
-      this.stringConverter.encodeToBytes(password),
-      this.stringConverter.encodeToBytes(emailAddress),
-      8192,
-      8,
-      1,
-      32
-    );
-    const keyString = this.binaryConverter.encodeToBase64(keyBinary);
-    this.localStorage.setItem(this.localStorageKey, keyString);
+    const loginKey = await this.cryptoService.scrypt(password, emailAddress);
+    this.storageService.set(this.loginKeyStorageKey, loginKey);
   }
 
-  public logout(): void {
-    this.localStorage.removeItem(this.localStorageKey);
+  public async logout(reason?: 'invalid-credentials'): Promise<void> {
+    this.storageService.remove(this.loginKeyStorageKey);
+    await this.router.navigateByUrl('/login');
+
+    switch (reason) {
+      case 'invalid-credentials':
+        this.snackBar.open(
+          'Érvénytelen bejelentkezési adatok. Jelentkezzen be újra!'
+        );
+        break;
+    }
   }
 }

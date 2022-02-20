@@ -1,15 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'binance-trader-bot-frontend-trader',
   templateUrl: './trader.component.html',
-  styleUrls: ['./trader.component.scss']
+  styleUrls: ['./trader.component.scss'],
 })
-export class TraderComponent implements OnInit {
-
-  constructor() { }
-
-  ngOnInit(): void {
-  }
-
-}
+export class TraderComponent {}

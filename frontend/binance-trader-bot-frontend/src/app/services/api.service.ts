@@ -1,10 +1,9 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { environment } from 'src/environments/environment';
+import { environment } from 'src/environments/environment.dev';
+import { ApiException } from '../types/apiException';
 import { Balance } from '../types/balance';
-import { CreateTradingStrategyConfiguration } from '../types/createTradingStrategyConfiguration';
-import { EditTradingStrategyConfiguration } from '../types/editTradingStrategyConfiguration';
+import { CreateTradingConfigurationRequest } from '../types/createTradingConfigurationRequest';
+import { EditTradingConfigurationRequest } from '../types/editTradingConfigurationRequest';
 import { OpenOrderResponse } from '../types/openOrderResponse';
 import { SetGlobalTradingLockRequest } from '../types/setGlobalTradingLockRequest';
 import { LoginService } from './login.service';
@@ -13,71 +12,93 @@ import { LoginService } from './login.service';
   providedIn: 'root',
 })
 export class ApiService {
-  private readonly API_HOST = environment.apiBaseUrl;
+  private readonly API_BASE_URL = environment.apiBaseUrl;
 
-  public constructor(
-    private readonly httpClient: HttpClient,
-    private readonly loginService: LoginService
-  ) {}
+  public constructor(private readonly loginService: LoginService) {}
 
   public createTradingConfiguration(
-    request: CreateTradingStrategyConfiguration
-  ): Observable<void> {
-    return this.httpClient.post<void>(
-      `${this.API_HOST}/api/create-trading-configuration`,
-      request,
-      {
-        headers: {
-          Authorization: this.loginService.getKey(),
-        },
-      }
+    createTradingConfigurationRequest: CreateTradingConfigurationRequest
+  ): Promise<void> {
+    return this.call<void>(
+      'create-trading-configuration',
+      'POST',
+      createTradingConfigurationRequest
     );
   }
 
   public editTradingConfiguration(
-    request: EditTradingStrategyConfiguration
-  ): Observable<void> {
-    return this.httpClient.post<void>(
-      `${this.API_HOST}/api/edit-trading-configuration`,
-      request,
-      {
-        headers: {
-          Authorization: this.loginService.getKey(),
-        },
-      }
+    editTradingStrategyConfigurationRequest: EditTradingConfigurationRequest
+  ): Promise<void> {
+    return this.call<void>(
+      'edit-trading-configuration',
+      'POST',
+      editTradingStrategyConfigurationRequest
     );
   }
 
   public setGlobalTradingLock(
-    request: SetGlobalTradingLockRequest
-  ): Observable<void> {
-    return this.httpClient.post<void>(
-      `${this.API_HOST}/api/set-global-trading-lock`,
-      request,
-      {
-        headers: {
-          Authorization: this.loginService.getKey(),
-        },
-      }
+    setGlobalTradingLockRequest: SetGlobalTradingLockRequest
+  ): Promise<void> {
+    return this.call<void>(
+      'set-global-trading-lock',
+      'POST',
+      setGlobalTradingLockRequest
     );
   }
 
-  public getCurrentOpenOrders(): Observable<OpenOrderResponse[]> {
-    return this.httpClient.get<OpenOrderResponse[]>(
-      `${this.API_HOST}/api/get-current-open-orders`,
-      {
-        headers: {
-          Authorization: this.loginService.getKey(),
-        },
-      }
-    );
+  public getCurrentOpenOrders(): Promise<OpenOrderResponse[]> {
+    return this.call<OpenOrderResponse[]>('get-current-open-orders', 'GET');
   }
 
-  public getBalances(): Observable<Balance[]> {
-    return this.httpClient.get<Balance[]>(`${this.API_HOST}/api/get-balances`, {
-      headers: {
-        Authorization: this.loginService.getKey(),
-      },
+  public getBalances(): Promise<Balance[]> {
+    return this.call<Balance[]>('get-balances', 'GET');
+  }
+
+  private async call<ResponseType>(
+    endpointPath: string,
+    method: 'GET' | 'POST',
+    requestPayload?: unknown
+  ): Promise<ResponseType> {
+    const request = this.createRequest(endpointPath, method, requestPayload);
+    const response = await fetch(request);
+
+    if (!response.ok) {
+      try {
+        const apiErrorJson = await response.json();
+        throw new ApiException(apiErrorJson.errorCode ?? 'UnknownError');
+      } catch (ex) {
+        if (ex instanceof ApiException) {
+          throw ex;
+        } else {
+          throw new ApiException('UnknownError');
+        }
+      }
+    }
+
+    try {
+      return response.json();
+    } catch (ex) {
+      throw new ApiException('UnknownError');
+    }
+  }
+
+  private createRequest(
+    endpointPath: string,
+    method: 'GET' | 'POST',
+    requestPayload: unknown
+  ): Request {
+    const requestUri = `${this.API_BASE_URL}/${endpointPath}`;
+    const headers = {
+      Authorization: this.loginService.getLoginKey(),
+    };
+    const body = JSON.stringify(requestPayload);
+    return new Request(requestUri, {
+      method,
+      headers,
+      body,
+      mode: environment.fetchRequestMode,
+      credentials: 'omit',
+      cache: 'no-store',
     });
   }
 }

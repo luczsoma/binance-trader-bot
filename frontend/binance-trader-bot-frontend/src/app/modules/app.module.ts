@@ -3,6 +3,10 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
+import {
+  MatSnackBarModule,
+  MAT_SNACK_BAR_DEFAULT_OPTIONS,
+} from '@angular/material/snack-bar';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppComponent } from '../components/app/app.component';
@@ -21,8 +25,11 @@ import { AppRoutingModule } from './app-routing.module';
     ReactiveFormsModule,
     MatInputModule,
     MatButtonModule,
+    MatSnackBarModule,
   ],
-  providers: [],
+  providers: [
+    { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 3000 } },
+  ],
   bootstrap: [AppComponent],
 })
 export class AppModule {}
