@@ -1,5 +1,7 @@
 package co.lucz.binancetraderbot.configuration;
 
+import co.lucz.binancetraderbot.filters.Headers;
+import co.lucz.binancetraderbot.filters.Methods;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
@@ -11,6 +13,7 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @EnableWebSecurity
@@ -88,11 +91,9 @@ public class SecurityConfiguration {
             http.cors(cors -> {
                 CorsConfigurationSource corsConfigurationSource = httpServletRequest -> {
                     CorsConfiguration corsConfiguration = new CorsConfiguration();
-                    corsConfiguration.setAllowedOrigins(List.of("http://localhost:4200"));
-//                    corsConfiguration.setAllowedMethods(new ArrayList<>(Methods.AllowedMethods));
-//                    corsConfiguration.setAllowedHeaders(new ArrayList<>(Headers.AllowedHeaders));
-//                    corsConfiguration.setAllowCredentials(false);
-//                    corsConfiguration.setMaxAge(300L);
+                    corsConfiguration.setAllowedOrigins(List.of("*"));
+                    corsConfiguration.setAllowedMethods(List.of("*"));
+                    corsConfiguration.setAllowedHeaders(List.of("*"));
                     return corsConfiguration;
                 };
 
