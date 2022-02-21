@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>co.lucz</groupId>
-    <artifactId>binance-trader-bot</artifactId>
+    <artifactId>binance-trader-bot-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>binance-trader-bot</name>
     <description>Binance trader bot application</description>
