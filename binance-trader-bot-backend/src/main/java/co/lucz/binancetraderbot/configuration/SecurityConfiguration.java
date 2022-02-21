@@ -1,10 +1,7 @@
 package co.lucz.binancetraderbot.configuration;
 
-import co.lucz.binancetraderbot.filters.Headers;
-import co.lucz.binancetraderbot.filters.Methods;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -13,12 +10,13 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @EnableWebSecurity
 public class SecurityConfiguration {
-    private static void configureBaselineHttpSecurity(HttpSecurity http) throws Exception {
+    private static void configureApiHttpSecurity(HttpSecurity http) throws Exception {
+        http.antMatcher("/api/**");
+
         http.headers(headers -> {
             headers.cacheControl();
             headers.frameOptions().deny();
@@ -43,6 +41,10 @@ public class SecurityConfiguration {
                             "fullscreen 'none'; " +
                             "payment 'none';"
             );
+            headers.contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'none'; " +
+                                                                              "base-uri 'self'; " +
+                                                                              "form-action 'none'; " +
+                                                                              "frame-ancestors 'none';"));
         });
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.anonymous().disable();
@@ -54,34 +56,16 @@ public class SecurityConfiguration {
         http.requestCache().disable();
     }
 
-    private static void configureApiHttpSecurity(HttpSecurity http) throws Exception {
-        http.antMatcher("/api/**");
-
-        configureBaselineHttpSecurity(http);
-
-        http.headers().contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'none'; " +
-                                                                                 "base-uri 'self'; " +
-                                                                                 "form-action 'none'; " +
-                                                                                 "frame-ancestors 'none';"));
-    }
-
     @Configuration
-    @Order(1)
-    public static class H2ConsoleSecurityConfiguration extends WebSecurityConfigurerAdapter {
+    @Profile("production")
+    public static class ProductionApiSecurityConfiguration extends WebSecurityConfigurerAdapter {
         @Override
         protected void configure(HttpSecurity http) throws Exception {
-            http.antMatcher("/h2-console/**");
-
-            configureBaselineHttpSecurity(http);
-
-            http.exceptionHandling().disable();
-
-            http.headers().frameOptions().disable();
+            configureApiHttpSecurity(http);
         }
     }
 
     @Configuration
-    @Order(2)
     @Profile("development")
     public static class DevelopmentApiSecurityConfiguration extends WebSecurityConfigurerAdapter {
         @Override
@@ -99,33 +83,6 @@ public class SecurityConfiguration {
 
                 cors.configurationSource(corsConfigurationSource);
             });
-        }
-    }
-
-    @Configuration
-    @Order(2)
-    @Profile("production")
-    public static class ProductionApiSecurityConfiguration extends WebSecurityConfigurerAdapter {
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-            configureApiHttpSecurity(http);
-        }
-    }
-
-    @Configuration
-    public static class SpaSecurityConfiguration extends WebSecurityConfigurerAdapter {
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-            configureBaselineHttpSecurity(http);
-
-            http.headers().contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'none'; " +
-                                                                                     "script-src 'self' 'unsafe-inline'; " +
-                                                                                     "style-src 'self' 'unsafe-inline'; " +
-                                                                                     "img-src 'self' data:; " +
-                                                                                     "connect-src 'self'; " +
-                                                                                     "base-uri 'self'; " +
-                                                                                     "form-action 'none'; " +
-                                                                                     "frame-ancestors 'none';"));
         }
     }
 }

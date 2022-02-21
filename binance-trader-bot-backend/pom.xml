@@ -79,21 +79,4 @@
             </plugin>
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <id>development</id>
-            <properties>
-                <spring.profiles.active>development</spring.profiles.active>
-            </properties>
-        </profile>
-        <profile>
-            <id>production</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <spring.profiles.active>production</spring.profiles.active>
-            </properties>
-        </profile>
-    </profiles>
 </project>
