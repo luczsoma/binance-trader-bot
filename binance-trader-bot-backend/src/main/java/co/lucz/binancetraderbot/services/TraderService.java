@@ -8,6 +8,7 @@ import co.lucz.binancetraderbot.helpers.SymbolHelpers;
 import co.lucz.binancetraderbot.methods.entities.requests.CreateTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.EditTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.SetGlobalTradingLockRequest;
+import co.lucz.binancetraderbot.methods.entities.responses.GetGlobalTradingLockResponse;
 import co.lucz.binancetraderbot.repositories.GlobalTradingLockRepository;
 import co.lucz.binancetraderbot.strategies.TradingStrategy;
 import co.lucz.binancetraderbot.structures.PriceInfo;
@@ -57,9 +58,14 @@ public class TraderService {
         this.renewTradingStrategySubscriptions();
     }
 
+    public GetGlobalTradingLockResponse getGlobalTradingLock() {
+        boolean tradingIsLocked = this.getGlobalTradingLockInternal();
+        return new GetGlobalTradingLockResponse(tradingIsLocked);
+    }
+
     public void setGlobalTradingLock(SetGlobalTradingLockRequest request) {
         boolean lockTargetValue = request.getLockTargetValue();
-        boolean lockActualValue = this.getGlobalTradingLock();
+        boolean lockActualValue = this.getGlobalTradingLockInternal();
 
         if (lockTargetValue) {
             if (!lockActualValue) {
@@ -110,7 +116,7 @@ public class TraderService {
                 PriceInfo latestPriceInfo = new PriceInfo(bestBidPrice, bestBidQuantity, bestAskPrice, bestAskQuantity);
                 List<PriceInfo> priceInfos = this.updatePriceInfos(symbolId, latestPriceInfo);
 
-                boolean isGlobalTradingLocked = this.getGlobalTradingLock();
+                boolean isGlobalTradingLocked = this.getGlobalTradingLockInternal();
                 if (!isGlobalTradingLocked) {
                     if (this.temporaryTradingLock.compareAndSet(false, true)) {
                         try {
@@ -126,6 +132,10 @@ public class TraderService {
         });
     }
 
+    private boolean getGlobalTradingLockInternal() {
+        return this.globalTradingLockRepository.count() > 0;
+    }
+
     private List<PriceInfo> updatePriceInfos(String symbolId, PriceInfo latestPriceInfo) {
         List<PriceInfo> priceInfos = this.priceInfosBySymbolId.getOrDefault(symbolId, new ArrayList<>());
 
@@ -137,9 +147,5 @@ public class TraderService {
         this.priceInfosBySymbolId.put(symbolId, priceInfos);
 
         return priceInfos;
-    }
-
-    private boolean getGlobalTradingLock() {
-        return this.globalTradingLockRepository.count() > 0;
     }
 }

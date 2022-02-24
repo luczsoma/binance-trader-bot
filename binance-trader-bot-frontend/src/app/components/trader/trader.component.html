@@ -1,1 +1,78 @@
-<p>trader works!</p>
+<div id="header">
+  <div id="title-and-status-toggle">
+    <h1>Ketyere</h1>
+    <mat-slide-toggle
+      id="trading-lock-slider"
+      color="primary"
+      [checked]="isTradingEnabled"
+      (change)="toggleGlobalTradingLock($event)"
+      ><strong>{{
+        isTradingEnabled ? "Bekapcsolva" : "Kikapcsolva"
+      }}</strong></mat-slide-toggle
+    >
+  </div>
+  <button mat-stroked-button (click)="refreshData()">Frissítés</button>
+</div>
+<mat-tab-group mat-align-tabs="start">
+  <mat-tab label="Státusz">
+    <div class="tab-contents">
+      <div *ngIf="!loaded" class="loader-wrapper">
+        <mat-spinner></mat-spinner>
+      </div>
+
+      <ng-container *ngIf="loaded">
+        <div id="grid">
+          <div id="balances">
+            <h2>Egyenlegek</h2>
+            <p *ngIf="!hasBalances">Jelenleg nincsen egyenlege.</p>
+            <table *ngIf="hasBalances" mat-table [dataSource]="balances">
+              <ng-container matColumnDef="asset">
+                <th mat-header-cell *matHeaderCellDef>Coin</th>
+                <td mat-cell *matCellDef="let balance">{{ balance.asset }}</td>
+              </ng-container>
+              <ng-container matColumnDef="free">
+                <th mat-header-cell *matHeaderCellDef>Szabad</th>
+                <td mat-cell *matCellDef="let balance">{{ balance.free }}</td>
+              </ng-container>
+              <ng-container matColumnDef="locked">
+                <th mat-header-cell *matHeaderCellDef>Zárolt</th>
+                <td mat-cell *matCellDef="let balance">{{ balance.locked }}</td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="balancesColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: balancesColumns"></tr>
+            </table>
+          </div>
+
+          <div id="open-orders">
+            <h2>Nyitott eladási megbízások</h2>
+            <p *ngIf="!hasOpenOrders">
+              Jelenleg nincsen nyitott eladási megbízása.
+            </p>
+            <table *ngIf="hasOpenOrders" mat-table [dataSource]="openOrders">
+              <ng-container matColumnDef="pair">
+                <th mat-header-cell *matHeaderCellDef>Pár</th>
+                <td mat-cell *matCellDef="let order">{{ order.symbol }}</td>
+              </ng-container>
+              <ng-container matColumnDef="quantity">
+                <th mat-header-cell *matHeaderCellDef>Mennyiség</th>
+                <td mat-cell *matCellDef="let order">{{ order.quantity }}</td>
+              </ng-container>
+              <ng-container matColumnDef="price">
+                <th mat-header-cell *matHeaderCellDef>Ár</th>
+                <td mat-cell *matCellDef="let order">{{ order.price }}</td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="openOrdersColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: openOrdersColumns"></tr>
+            </table>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </mat-tab>
+
+  <mat-tab label="Beállítások">
+    <div class="tab-contents"></div>
+  </mat-tab>
+</mat-tab-group>

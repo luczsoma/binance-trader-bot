@@ -5,6 +5,7 @@ import co.lucz.binancetraderbot.binance.entities.OpenOrderResponse;
 import co.lucz.binancetraderbot.methods.entities.requests.CreateTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.EditTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.SetGlobalTradingLockRequest;
+import co.lucz.binancetraderbot.methods.entities.responses.GetGlobalTradingLockResponse;
 import co.lucz.binancetraderbot.services.TraderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -39,6 +40,16 @@ public class ApiController {
     )
     public void editTradingConfiguration(@RequestBody EditTradingConfigurationRequest request) {
         this.traderService.editTradingConfiguration(request);
+    }
+
+    @RequestMapping(
+            name = "GetGlobalTradingLock",
+            path = "get-global-trading-lock",
+            method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public GetGlobalTradingLockResponse getGlobalTradingLock() {
+        return this.traderService.getGlobalTradingLock();
     }
 
     @RequestMapping(
