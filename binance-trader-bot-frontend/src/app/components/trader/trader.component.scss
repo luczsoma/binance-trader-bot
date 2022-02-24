@@ -1,17 +1,28 @@
+@import "../../../styles/breakpoints.scss";
+
 :host {
   display: block;
   padding: 20px;
 
   #header {
     display: flex;
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: space-between;
+    flex-direction: column;
+    margin-bottom: 10px;
+
+    @include media-breakpoint-up-sm {
+      flex-direction: row;
+      align-items: baseline;
+      justify-content: space-between;
+    }
 
     #title-and-status-toggle {
       display: flex;
       flex-direction: row;
       align-items: baseline;
+
+      @include media-breakpoint-down-sm {
+        margin-bottom: 15px;
+      }
 
       h1 {
         margin: 0;
@@ -19,6 +30,14 @@
 
       #trading-lock-slider {
         margin-left: 10px;
+      }
+    }
+
+    button {
+      &:not(:last-child) {
+        @include media-breakpoint-down-sm {
+          margin-bottom: 10px;
+        }
       }
     }
   }
@@ -35,7 +54,7 @@
 
     #grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 20px;
 
       table {

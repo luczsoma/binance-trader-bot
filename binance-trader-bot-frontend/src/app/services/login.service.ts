@@ -45,11 +45,17 @@ export class LoginService {
     this.storageService.set(this.loginKeyStorageKey, loginKey);
   }
 
-  public async logout(reason?: 'invalid-credentials'): Promise<void> {
+  public async logout(
+    reason?: 'regular-logout' | 'invalid-credentials'
+  ): Promise<void> {
     this.storageService.remove(this.loginKeyStorageKey);
     await this.router.navigateByUrl('/login');
 
     switch (reason) {
+      case 'regular-logout':
+        this.snackBar.open('Sikeresen kijelentkezett.');
+        break;
+
       case 'invalid-credentials':
         this.snackBar.open(
           'Érvénytelen bejelentkezési adatok. Jelentkezzen be újra!'

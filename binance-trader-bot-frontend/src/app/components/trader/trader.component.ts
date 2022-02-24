@@ -76,6 +76,10 @@ export class TraderComponent implements OnInit {
     this._loaded = true;
   }
 
+  public async logout(): Promise<void> {
+    await this.loginService.logout();
+  }
+
   public async toggleGlobalTradingLock(
     event: MatSlideToggleChange
   ): Promise<void> {

@@ -11,7 +11,12 @@
       }}</strong></mat-slide-toggle
     >
   </div>
-  <button mat-stroked-button (click)="refreshData()">Frissítés</button>
+  <button mat-stroked-button color="primary" (click)="refreshData()">
+    Frissítés
+  </button>
+  <button mat-stroked-button color="warn" (click)="logout()">
+    Kijelentkezés
+  </button>
 </div>
 <mat-tab-group mat-align-tabs="start">
   <mat-tab label="Státusz">
