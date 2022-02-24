@@ -34,6 +34,10 @@
     }
 
     button {
+      &#refresh-data-button {
+        min-width: 160px;
+      }
+
       &:not(:last-child) {
         @include media-breakpoint-down-sm {
           margin-bottom: 10px;
