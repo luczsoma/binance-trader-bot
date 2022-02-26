@@ -31,8 +31,8 @@ export class LoginComponent {
     );
 
     try {
-      await this.loginService.withLoginErrorHandling(async () =>
-        this.apiService.getBalances()
+      await this.loginService.withLoginErrorHandling(
+        async () => await this.apiService.getBalances()
       );
       await this.router.navigateByUrl('/');
     } catch (ex) {}

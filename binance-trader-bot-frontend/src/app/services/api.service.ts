@@ -5,6 +5,7 @@ import { Balance } from '../types/balance';
 import { CreateTradingConfigurationRequest } from '../types/createTradingConfigurationRequest';
 import { EditTradingConfigurationRequest } from '../types/editTradingConfigurationRequest';
 import { GetGlobalTradingLockResponse } from '../types/getGlobalTradingLockResponse';
+import { GetTradingConfigurationResponse } from '../types/getTradingConfigurationResponse';
 import { OpenOrderResponse } from '../types/openOrderResponse';
 import { SetGlobalTradingLockRequest } from '../types/setGlobalTradingLockRequest';
 import { LoginService } from './login.service';
@@ -24,6 +25,16 @@ export class ApiService {
   };
 
   public constructor(private readonly loginService: LoginService) {}
+
+  public getTradingConfigurations(): Promise<
+    GetTradingConfigurationResponse[]
+  > {
+    return this.call<GetTradingConfigurationResponse[]>(
+      'get-trading-configurations',
+      'GET',
+      this.responseProcessors.json
+    );
+  }
 
   public createTradingConfiguration(
     createTradingConfigurationRequest: CreateTradingConfigurationRequest

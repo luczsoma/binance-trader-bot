@@ -15,8 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,22 +34,11 @@ public class ConfigurationRepositoryService {
     private BinanceClient binanceClient;
 
     public Map<String, TradingStrategy> getTradingStrategies() {
-        if  (this.tradingStrategyBySymbolId.isEmpty()) {
+        if (this.tradingStrategyBySymbolId.isEmpty()) {
             this.refreshConfiguration();
         }
 
         return tradingStrategyBySymbolId;
-    }
-
-    private void refreshConfiguration() {
-        this.tradingStrategyBySymbolId.clear();
-
-        this.tradingConfigurationRepository.findAll().forEach(tradingConfiguration -> {
-            String symbolId = tradingConfiguration.getSymbolId();
-            TradingStrategy tradingStrategy = this.getValidTradingStrategy(tradingConfiguration.getTradingStrategyName(),
-                                                                           tradingConfiguration.getTradingStrategyConfiguration());
-            this.tradingStrategyBySymbolId.put(symbolId, tradingStrategy);
-        });
     }
 
     public Duration getLongestPriceMonitorWindow() {
@@ -56,6 +47,12 @@ public class ConfigurationRepositoryService {
                         .map(TradingStrategy::getPriceMonitorWindow)
                         .collect(Collectors.toSet())
         );
+    }
+
+    public List<TradingConfiguration> getTradingConfigurations() {
+        List<TradingConfiguration> tradingConfigurations = new ArrayList<>();
+        this.tradingConfigurationRepository.findAll().forEach(tradingConfigurations::add);
+        return tradingConfigurations;
     }
 
     public void createTradingConfiguration(CreateTradingConfigurationRequest request) {
@@ -93,6 +90,17 @@ public class ConfigurationRepositoryService {
 
         this.tradingConfigurationRepository.save(tradingConfiguration);
         this.refreshConfiguration();
+    }
+
+    private void refreshConfiguration() {
+        this.tradingStrategyBySymbolId.clear();
+
+        this.tradingConfigurationRepository.findAll().forEach(tradingConfiguration -> {
+            String symbolId = tradingConfiguration.getSymbolId();
+            TradingStrategy tradingStrategy = this.getValidTradingStrategy(tradingConfiguration.getTradingStrategyName(),
+                                                                           tradingConfiguration.getTradingStrategyConfiguration());
+            this.tradingStrategyBySymbolId.put(symbolId, tradingStrategy);
+        });
     }
 
     private TradingStrategyName validateTradingStrategyIdentifier(String tradingStrategyIdentifier) {

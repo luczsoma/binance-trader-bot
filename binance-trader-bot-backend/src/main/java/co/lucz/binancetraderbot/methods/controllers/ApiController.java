@@ -6,6 +6,7 @@ import co.lucz.binancetraderbot.methods.entities.requests.CreateTradingConfigura
 import co.lucz.binancetraderbot.methods.entities.requests.EditTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.SetGlobalTradingLockRequest;
 import co.lucz.binancetraderbot.methods.entities.responses.GetGlobalTradingLockResponse;
+import co.lucz.binancetraderbot.methods.entities.responses.GetTradingConfigurationResponse;
 import co.lucz.binancetraderbot.services.TraderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -21,6 +22,16 @@ import java.util.List;
 public class ApiController {
     @Autowired
     private TraderService traderService;
+
+    @RequestMapping(
+            name = "GetTradingConfigurations",
+            path = "get-trading-configurations",
+            method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public List<GetTradingConfigurationResponse> getTradingConfigurations() {
+        return this.traderService.getTradingConfigurations();
+    }
 
     @RequestMapping(
             name = "CreateTradingConfiguration",

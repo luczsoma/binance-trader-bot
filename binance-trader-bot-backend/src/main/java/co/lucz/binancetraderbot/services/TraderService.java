@@ -4,11 +4,13 @@ import co.lucz.binancetraderbot.binance.BinanceClient;
 import co.lucz.binancetraderbot.binance.entities.Balance;
 import co.lucz.binancetraderbot.binance.entities.OpenOrderResponse;
 import co.lucz.binancetraderbot.entities.GlobalTradingLock;
+import co.lucz.binancetraderbot.entities.TradingConfiguration;
 import co.lucz.binancetraderbot.helpers.SymbolHelpers;
 import co.lucz.binancetraderbot.methods.entities.requests.CreateTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.EditTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.SetGlobalTradingLockRequest;
 import co.lucz.binancetraderbot.methods.entities.responses.GetGlobalTradingLockResponse;
+import co.lucz.binancetraderbot.methods.entities.responses.GetTradingConfigurationResponse;
 import co.lucz.binancetraderbot.repositories.GlobalTradingLockRepository;
 import co.lucz.binancetraderbot.strategies.TradingStrategy;
 import co.lucz.binancetraderbot.structures.PriceInfo;
@@ -47,6 +49,16 @@ public class TraderService {
     private final Map<String, List<PriceInfo>> priceInfosBySymbolId = new HashMap<>();
 
     private final AtomicBoolean temporaryTradingLock = new AtomicBoolean();
+
+    public List<GetTradingConfigurationResponse> getTradingConfigurations() {
+        List<TradingConfiguration> tradingConfigurations = this.configurationRepositoryService.getTradingConfigurations();
+        return tradingConfigurations.stream()
+                .map(tradingConfiguration -> new GetTradingConfigurationResponse(
+                        tradingConfiguration.getSymbolId(),
+                        tradingConfiguration.getTradingStrategyName(),
+                        tradingConfiguration.getTradingStrategyConfiguration())
+                ).collect(Collectors.toList());
+    }
 
     public void createTradingConfiguration(CreateTradingConfigurationRequest request) {
         this.configurationRepositoryService.createTradingConfiguration(request);

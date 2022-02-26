@@ -1,0 +1,2 @@
+export type TradingStrategyName =
+  'BuyOnPercentageDecreaseInTimeframeAndSetLimitOrder';
