@@ -3,6 +3,7 @@ package co.lucz.binancetraderbot.exceptions;
 import co.lucz.binancetraderbot.exceptions.internal.BadRequestException;
 import co.lucz.binancetraderbot.exceptions.internal.ClockDiscrepancyException;
 import co.lucz.binancetraderbot.exceptions.internal.MethodNotAllowedException;
+import co.lucz.binancetraderbot.exceptions.internal.SymbolAlreadyExistsException;
 import co.lucz.binancetraderbot.exceptions.internal.UnauthorizedException;
 import co.lucz.binancetraderbot.services.ErrorLoggerService;
 import org.springframework.beans.ConversionNotSupportedException;
@@ -66,6 +67,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ) {
         ApiError apiError = new ApiError(
                 ApiError.ApiErrorCode.MethodNotAllowed,
+                exception
+        );
+        return handleApiError(apiError);
+    }
+
+    @ExceptionHandler({SymbolAlreadyExistsException.class})
+    public ResponseEntity<Object> handleSymbolAlreadyExistsException(SymbolAlreadyExistsException exception, WebRequest request) {
+        ApiError apiError = new ApiError(
+                ApiError.ApiErrorCode.SymbolAlreadyExists,
                 exception
         );
         return handleApiError(apiError);

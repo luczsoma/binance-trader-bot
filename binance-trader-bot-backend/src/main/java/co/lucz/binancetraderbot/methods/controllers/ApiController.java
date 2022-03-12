@@ -3,6 +3,7 @@ package co.lucz.binancetraderbot.methods.controllers;
 import co.lucz.binancetraderbot.binance.entities.Balance;
 import co.lucz.binancetraderbot.binance.entities.OpenOrderResponse;
 import co.lucz.binancetraderbot.methods.entities.requests.CreateTradingConfigurationRequest;
+import co.lucz.binancetraderbot.methods.entities.requests.DeleteTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.EditTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.SetGlobalTradingLockRequest;
 import co.lucz.binancetraderbot.methods.entities.responses.GetGlobalTradingLockResponse;
@@ -51,6 +52,16 @@ public class ApiController {
     )
     public void editTradingConfiguration(@RequestBody EditTradingConfigurationRequest request) {
         this.traderService.editTradingConfiguration(request);
+    }
+
+    @RequestMapping(
+            name = "DeleteTradingConfiguration",
+            path = "delete-trading-configuration",
+            method = RequestMethod.POST,
+            consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    public void deleteTradingConfiguration(@RequestBody DeleteTradingConfigurationRequest request) {
+        this.traderService.deleteTradingConfiguration(request);
     }
 
     @RequestMapping(

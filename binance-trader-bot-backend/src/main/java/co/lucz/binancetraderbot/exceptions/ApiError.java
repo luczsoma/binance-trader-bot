@@ -15,6 +15,7 @@ public final class ApiError {
         MethodNotAllowed,
         NotAcceptable,
         NotFound,
+        SymbolAlreadyExists,
         Unauthorized,
         UnsupportedMediaType,
     }

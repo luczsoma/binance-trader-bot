@@ -1,7 +1,7 @@
 package co.lucz.binancetraderbot.methods.entities.responses;
 
 public class GetGlobalTradingLockResponse {
-    private boolean tradingIsLocked;
+    private final boolean tradingIsLocked;
 
     public GetGlobalTradingLockResponse(boolean tradingIsLocked) {
         this.tradingIsLocked = tradingIsLocked;

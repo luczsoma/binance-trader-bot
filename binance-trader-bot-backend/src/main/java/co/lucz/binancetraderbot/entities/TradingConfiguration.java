@@ -20,15 +20,19 @@ public class TradingConfiguration {
 
     private String tradingStrategyConfiguration;
 
+    private boolean enabled;
+
     public TradingConfiguration() {
     }
 
     public TradingConfiguration(String symbolId,
                                 TradingStrategyName tradingStrategyName,
-                                String tradingStrategyConfiguration) {
+                                String tradingStrategyConfiguration,
+                                boolean enabled) {
         this.symbolId = symbolId;
         this.tradingStrategyName = tradingStrategyName;
         this.tradingStrategyConfiguration = tradingStrategyConfiguration;
+        this.enabled = enabled;
     }
 
     public String getSymbolId() {
@@ -53,5 +57,13 @@ public class TradingConfiguration {
 
     public void setTradingStrategyConfiguration(String tradingStrategyConfiguration) {
         this.tradingStrategyConfiguration = tradingStrategyConfiguration;
+    }
+
+    public boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 }

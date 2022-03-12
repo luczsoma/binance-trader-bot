@@ -5,14 +5,21 @@ import co.lucz.binancetraderbot.binance.entities.Balance;
 import co.lucz.binancetraderbot.binance.entities.OpenOrderResponse;
 import co.lucz.binancetraderbot.entities.GlobalTradingLock;
 import co.lucz.binancetraderbot.entities.TradingConfiguration;
+import co.lucz.binancetraderbot.exceptions.internal.BadRequestException;
+import co.lucz.binancetraderbot.exceptions.internal.SymbolAlreadyExistsException;
 import co.lucz.binancetraderbot.helpers.SymbolHelpers;
 import co.lucz.binancetraderbot.methods.entities.requests.CreateTradingConfigurationRequest;
+import co.lucz.binancetraderbot.methods.entities.requests.DeleteTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.EditTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.SetGlobalTradingLockRequest;
 import co.lucz.binancetraderbot.methods.entities.responses.GetGlobalTradingLockResponse;
 import co.lucz.binancetraderbot.methods.entities.responses.GetTradingConfigurationResponse;
 import co.lucz.binancetraderbot.repositories.GlobalTradingLockRepository;
+import co.lucz.binancetraderbot.repositories.TradingConfigurationRepository;
+import co.lucz.binancetraderbot.strategies.BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy;
 import co.lucz.binancetraderbot.strategies.TradingStrategy;
+import co.lucz.binancetraderbot.strategies.TradingStrategyName;
+import co.lucz.binancetraderbot.structures.BookTickerSubscriptionInfo;
 import co.lucz.binancetraderbot.structures.PriceInfo;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,50 +31,99 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Service
 public class TraderService {
-    @Autowired
-    private BinanceClient binanceClient;
+    private final Duration BINANCE_WEBSOCKET_CONNECTION_MAX_DURATION = Duration.ofHours(23);
+
+    private final Map<String, TradingConfiguration> tradingConfigurationsCache = new HashMap<>();
+    private boolean globalTradingLockCache;
+
+    private final Map<String, BookTickerSubscriptionInfo> bookTickerSubscriptionInfos = new HashMap<>();
+    private final Map<String, List<PriceInfo>> priceInfos = new HashMap<>();
 
     @Autowired
-    private ConfigurationRepositoryService configurationRepositoryService;
+    private BinanceClient binanceClient;
 
     @Autowired
     private ErrorLoggerService errorLoggerService;
 
     @Autowired
+    private TradingConfigurationRepository tradingConfigurationRepository;
+
+    @Autowired
     private GlobalTradingLockRepository globalTradingLockRepository;
 
-    private final Map<String, List<PriceInfo>> priceInfosBySymbolId = new HashMap<>();
-
-    private final AtomicBoolean temporaryTradingLock = new AtomicBoolean();
+    // region API interface
 
     public List<GetTradingConfigurationResponse> getTradingConfigurations() {
-        List<TradingConfiguration> tradingConfigurations = this.configurationRepositoryService.getTradingConfigurations();
-        return tradingConfigurations.stream()
-                .map(tradingConfiguration -> new GetTradingConfigurationResponse(
+        List<GetTradingConfigurationResponse> getTradingConfigurationResponses = new ArrayList<>();
+        this.tradingConfigurationRepository.findAll().forEach(
+                tradingConfiguration -> new GetTradingConfigurationResponse(
                         tradingConfiguration.getSymbolId(),
                         tradingConfiguration.getTradingStrategyName(),
-                        tradingConfiguration.getTradingStrategyConfiguration())
-                ).collect(Collectors.toList());
+                        tradingConfiguration.getTradingStrategyConfiguration(),
+                        tradingConfiguration.getEnabled()
+                )
+        );
+        return getTradingConfigurationResponses;
     }
 
     public void createTradingConfiguration(CreateTradingConfigurationRequest request) {
-        this.configurationRepositoryService.createTradingConfiguration(request);
-        this.renewTradingStrategySubscriptions();
+        String symbolId = request.getSymbolId().toUpperCase();
+        if (this.tradingConfigurationRepository.findBySymbolId(symbolId).isPresent()) {
+            throw new SymbolAlreadyExistsException("trading configuration for given symbol already exists");
+        }
+
+        this.validateSymbol(symbolId);
+
+        TradingStrategyName tradingStrategyName = this.validateTradingStrategyName(request.getTradingStrategyName());
+        String tradingStrategyConfiguration = request.getTradingStrategyConfiguration();
+        this.validateTradingStrategyConfiguration(tradingStrategyName, tradingStrategyConfiguration);
+
+        TradingConfiguration tradingConfiguration = new TradingConfiguration(symbolId,
+                                                                             tradingStrategyName,
+                                                                             tradingStrategyConfiguration,
+                                                                             request.getEnabled());
+        this.tradingConfigurationRepository.save(tradingConfiguration);
+
+        this.tradingConfigurationsCache.put(symbolId, tradingConfiguration);
+        this.subscribeTradingStrategy(symbolId);
     }
 
     public void editTradingConfiguration(EditTradingConfigurationRequest request) {
-        this.configurationRepositoryService.editTradingConfiguration(request);
-        this.renewTradingStrategySubscriptions();
+        String symbolId = request.getSymbolId().toUpperCase();
+        TradingConfiguration tradingConfiguration = this.tradingConfigurationRepository.findBySymbolId(symbolId)
+                .orElseThrow(() -> new BadRequestException("no such symbol id"));
+
+        TradingStrategyName tradingStrategyName = this.validateTradingStrategyName(request.getTradingStrategyName());
+
+        String tradingStrategyConfiguration = request.getTradingStrategyConfiguration();
+        this.validateTradingStrategyConfiguration(tradingStrategyName, tradingStrategyConfiguration);
+
+        tradingConfiguration.setTradingStrategyName(tradingStrategyName);
+        tradingConfiguration.setTradingStrategyConfiguration(tradingStrategyConfiguration);
+        tradingConfiguration.setEnabled(request.getEnabled());
+
+        this.tradingConfigurationRepository.save(tradingConfiguration);
+
+        this.tradingConfigurationsCache.put(symbolId, tradingConfiguration);
+    }
+
+    public void deleteTradingConfiguration(DeleteTradingConfigurationRequest request) {
+        String symbolId = request.getSymbolId().toUpperCase();
+        this.tradingConfigurationRepository.findBySymbolId(symbolId)
+                .ifPresent(tradingConfiguration -> this.tradingConfigurationRepository.delete(tradingConfiguration));
+
+        this.unsubscribeTradingStrategy(symbolId);
+        this.tradingConfigurationsCache.remove(symbolId);
     }
 
     public GetGlobalTradingLockResponse getGlobalTradingLock() {
@@ -81,10 +137,18 @@ public class TraderService {
 
         if (lockTargetValue) {
             if (!lockActualValue) {
-                this.globalTradingLockRepository.save(new GlobalTradingLock());
+                try {
+                    this.globalTradingLockRepository.save(new GlobalTradingLock());
+                } finally {
+                    this.globalTradingLockCache = true;
+                }
             }
         } else {
-            this.globalTradingLockRepository.deleteAll();
+            try {
+                this.globalTradingLockRepository.deleteAll();
+            } finally {
+                this.globalTradingLockCache = false;
+            }
         }
     }
 
@@ -96,52 +160,89 @@ public class TraderService {
         return new ArrayList<>(this.binanceClient.getBalances().values());
     }
 
+    // endregion
+
+    // region lifecycle methods
+
     @PostConstruct
     private void initializeTrading() {
-        Map<String, TradingStrategy> tradingStrategies = this.configurationRepositoryService.getTradingStrategies();
-        Set<String> symbols = tradingStrategies.keySet().stream()
+        this.tradingConfigurationRepository.findAll().forEach(
+                tradingConfiguration -> this.tradingConfigurationsCache.put(tradingConfiguration.getSymbolId(),
+                                                                            tradingConfiguration));
+
+        Set<String> symbols = this.tradingConfigurationsCache.keySet().stream()
                 .map(SymbolHelpers::getSymbol)
                 .collect(Collectors.toSet());
         this.binanceClient.cacheExchangeInfo(symbols);
-        this.subscribeTradingStrategies(tradingStrategies);
+
+        this.tradingConfigurationsCache.keySet().forEach(this::subscribeTradingStrategy);
     }
 
-    @Scheduled(fixedDelay = 23, timeUnit = TimeUnit.HOURS)
-    private void renewTradingStrategySubscriptions() {
-        this.binanceClient.closeAllWebsocketConnections();
-
-        Map<String, TradingStrategy> tradingStrategies = this.configurationRepositoryService.getTradingStrategies();
-        this.subscribeTradingStrategies(tradingStrategies);
-    }
-
-    private void subscribeTradingStrategies(Map<String, TradingStrategy> tradingStrategies) {
-        tradingStrategies.forEach((symbolId, strategy) -> {
-            strategy.setBinanceClient(this.binanceClient);
-            this.binanceClient.bookTicker(SymbolHelpers.getSymbol(symbolId), response -> {
-                JSONObject responseJson = new JSONObject(response);
-
-                BigDecimal bestBidPrice = new BigDecimal(responseJson.getString("b"));
-                BigDecimal bestBidQuantity = new BigDecimal(responseJson.getString("B"));
-                BigDecimal bestAskPrice = new BigDecimal(responseJson.getString("a"));
-                BigDecimal bestAskQuantity = new BigDecimal(responseJson.getString("A"));
-
-                PriceInfo latestPriceInfo = new PriceInfo(bestBidPrice, bestBidQuantity, bestAskPrice, bestAskQuantity);
-                List<PriceInfo> priceInfos = this.updatePriceInfos(symbolId, latestPriceInfo);
-
-                boolean isGlobalTradingLocked = this.getGlobalTradingLockInternal();
-                if (!isGlobalTradingLocked) {
-                    if (this.temporaryTradingLock.compareAndSet(false, true)) {
-                        try {
-                            strategy.act(symbolId, priceInfos);
-                        } catch (Exception e) {
-                            this.errorLoggerService.logThrowable(e);
-                        } finally {
-                            this.temporaryTradingLock.set(false);
-                        }
-                    }
-                }
-            });
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+    private void renewTradingStrategySubscriptionsIfNeeded() {
+        this.bookTickerSubscriptionInfos.keySet().forEach(symbolId -> {
+            boolean unsubscribed = this.unsubscribeTradingStrategyIfExpired(symbolId);
+            if (unsubscribed) {
+                this.subscribeTradingStrategy(symbolId);
+            }
         });
+    }
+
+    // endregion
+
+    private void subscribeTradingStrategy(String symbolId) {
+        String symbol = SymbolHelpers.getSymbol(symbolId);
+        int connectionId = this.binanceClient.bookTicker(symbol, response ->
+                this.handleBookTickerResponse(symbolId, response));
+        BookTickerSubscriptionInfo bookTickerSubscriptionInfo =
+                new BookTickerSubscriptionInfo(connectionId, Instant.now());
+        this.bookTickerSubscriptionInfos.put(symbolId, bookTickerSubscriptionInfo);
+    }
+
+    private boolean unsubscribeTradingStrategyIfExpired(String symbolId) {
+        BookTickerSubscriptionInfo bookTickerSubscriptionInfo = this.bookTickerSubscriptionInfos.get(symbolId);
+
+        Instant connectionInitiation = bookTickerSubscriptionInfo.getSubscribedAt();
+        Instant connectionExpiration = connectionInitiation.plus(this.BINANCE_WEBSOCKET_CONNECTION_MAX_DURATION);
+        boolean connectionExpired = connectionExpiration.isBefore(Instant.now());
+        if (connectionExpired) {
+            this.unsubscribeTradingStrategy(symbolId);
+        }
+        return connectionExpired;
+    }
+
+    private void unsubscribeTradingStrategy(String symbolId) {
+        BookTickerSubscriptionInfo bookTickerSubscriptionInfo = this.bookTickerSubscriptionInfos.get(symbolId);
+        if (bookTickerSubscriptionInfo != null) {
+            int websocketConnectionId = bookTickerSubscriptionInfo.getConnectionId();
+            this.binanceClient.closeWebsocketConnection(websocketConnectionId);
+        }
+        this.bookTickerSubscriptionInfos.remove(symbolId);
+    }
+
+    private void handleBookTickerResponse(String symbolId, String response) {
+        JSONObject responseJson = new JSONObject(response);
+
+        BigDecimal bestBidPrice = new BigDecimal(responseJson.getString("b"));
+        BigDecimal bestBidQuantity = new BigDecimal(responseJson.getString("B"));
+        BigDecimal bestAskPrice = new BigDecimal(responseJson.getString("a"));
+        BigDecimal bestAskQuantity = new BigDecimal(responseJson.getString("A"));
+
+        PriceInfo latestPriceInfo = new PriceInfo(bestBidPrice, bestBidQuantity, bestAskPrice, bestAskQuantity);
+        List<PriceInfo> priceInfos = this.updatePriceInfos(symbolId, latestPriceInfo);
+
+        if (!this.globalTradingLockCache) {
+            TradingConfiguration tradingConfiguration = this.tradingConfigurationsCache.get(symbolId);
+            if (tradingConfiguration.getEnabled()) {
+                try {
+                    TradingStrategy tradingStrategy = this.getValidTradingStrategy(tradingConfiguration);
+                    tradingStrategy.setBinanceClient(this.binanceClient);
+                    tradingStrategy.act(symbolId, priceInfos);
+                } catch (Exception e) {
+                    this.errorLoggerService.logThrowable(e);
+                }
+            }
+        }
     }
 
     private boolean getGlobalTradingLockInternal() {
@@ -149,15 +250,70 @@ public class TraderService {
     }
 
     private List<PriceInfo> updatePriceInfos(String symbolId, PriceInfo latestPriceInfo) {
-        List<PriceInfo> priceInfos = this.priceInfosBySymbolId.getOrDefault(symbolId, new ArrayList<>());
+        List<PriceInfo> priceInfos = this.priceInfos.getOrDefault(symbolId, new ArrayList<>());
 
-        Duration longestPriceMonitorWindow = this.configurationRepositoryService.getLongestPriceMonitorWindow();
+        Duration longestPriceMonitorWindow = this.getLongestPriceMonitorWindow();
         Instant monitorWindowStart = Instant.now().minus(longestPriceMonitorWindow);
         priceInfos.removeIf(priceInfo -> priceInfo.getInstant().isBefore(monitorWindowStart));
 
         priceInfos.add(latestPriceInfo);
-        this.priceInfosBySymbolId.put(symbolId, priceInfos);
+        this.priceInfos.put(symbolId, priceInfos);
 
         return priceInfos;
+    }
+
+    private Duration getLongestPriceMonitorWindow() {
+        Set<Duration> priceMonitorWindows = this.tradingConfigurationsCache.values().stream()
+                .filter(TradingConfiguration::getEnabled)
+                .map(this::getValidTradingStrategy)
+                .map(TradingStrategy::getPriceMonitorWindow)
+                .collect(Collectors.toSet());
+
+        return Collections.max(priceMonitorWindows);
+    }
+
+    private void validateSymbol(String symbolId) {
+        String symbol = SymbolHelpers.getSymbol(symbolId);
+        try {
+            this.binanceClient.cacheExchangeInfo(Set.of(symbol));
+        } catch (Exception ex) {
+            throw new BadRequestException("invalid symbol id");
+        }
+    }
+
+    private TradingStrategyName validateTradingStrategyName(String tradingStrategyName) {
+        try {
+            return TradingStrategyName.valueOf(tradingStrategyName);
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("invalid trading strategy name");
+        }
+    }
+
+    private void validateTradingStrategyConfiguration(TradingStrategyName tradingStrategyName,
+                                                      String tradingStrategyConfiguration) {
+        try {
+            this.getValidTradingStrategy(tradingStrategyName, tradingStrategyConfiguration);
+        } catch (Exception ex) {
+            throw new BadRequestException("invalid trading strategy configuration");
+        }
+    }
+
+    private TradingStrategy getValidTradingStrategy(TradingConfiguration tradingConfiguration) {
+        return this.getValidTradingStrategy(tradingConfiguration.getTradingStrategyName(),
+                                            tradingConfiguration.getTradingStrategyConfiguration());
+    }
+
+    private TradingStrategy getValidTradingStrategy(TradingStrategyName tradingStrategyName,
+                                                    String tradingStrategyConfiguration) {
+        JSONObject tradingStrategyConfigurationJson = new JSONObject(tradingStrategyConfiguration);
+
+        switch (tradingStrategyName) {
+            case BuyOnPercentageDecreaseInTimeframeAndSetLimitOrder:
+                return BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy.ofTradingStrategyConfigurationJson(
+                        tradingStrategyConfigurationJson);
+
+            default:
+                throw new IllegalArgumentException("invalid trading strategy");
+        }
     }
 }

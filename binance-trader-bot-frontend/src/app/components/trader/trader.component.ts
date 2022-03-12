@@ -63,7 +63,7 @@ export class TraderComponent implements OnInit {
   }
 
   public get tradingConfigurationsColumns(): string[] {
-    return ['symbol', 'strategy'];
+    return ['status', 'symbol', 'strategy', 'edit'];
   }
 
   public constructor(
@@ -113,6 +113,24 @@ export class TraderComponent implements OnInit {
     await this.refreshIsTradingEnabled();
   }
 
+  public async toggleTradingConfiguration(
+    event: MatSlideToggleChange,
+    tradingConfiguration: TradingConfiguration
+  ): Promise<void> {
+    const enabled = event.checked;
+    tradingConfiguration.enabled = enabled;
+    await this.updateTradingConfiguration(tradingConfiguration);
+
+    this.refreshTradingConfigurations();
+  }
+
+  public async editTradingConfiguration(
+    tradingConfiguration: TradingConfiguration
+  ): Promise<void> {
+    await this.updateTradingConfiguration(tradingConfiguration);
+    this.refreshTradingConfigurations();
+  }
+
   private async refreshBalances(): Promise<void> {
     this._balances = await this.loginService.withLoginErrorHandling(
       async () => await this.apiService.getBalances()
@@ -146,30 +164,22 @@ export class TraderComponent implements OnInit {
       await this.loginService.withLoginErrorHandling(
         async () => await this.apiService.getTradingConfigurations()
       );
-    // this._tradingConfigurations = getTradingConfigurationResponse.map(
-    //   (tradingConfiguration) => {
-    //     const baseAsset = this.symbolService.getBaseAsset(
-    //       tradingConfiguration.symbolId
-    //     );
-    //     const quoteAsset = this.symbolService.getQuoteAsset(
-    //       tradingConfiguration.symbolId
-    //     );
-
-    //     return {
-    //       symbol: `${baseAsset}/${quoteAsset}`,
-    //       strategyName: tradingConfiguration.tradingStrategyName,
-    //       strategy: this.tradingStrategyService.getTradingStrategy(
-    //         tradingConfiguration.tradingStrategyName,
-    //         tradingConfiguration.tradingStrategyConfiguration
-    //       ),
-    //     };
-    //   }
-    // );
+    this._tradingConfigurations = getTradingConfigurationResponse.map(
+      (getTradingConfigurationResponse) => ({
+        symbol: this.symbolService.getFriendlyNameFromSymbolId(
+          getTradingConfigurationResponse.symbolId
+        ),
+        strategy: this.tradingStrategyService.getTradingStrategy(
+          getTradingConfigurationResponse.tradingStrategyName,
+          getTradingConfigurationResponse.tradingStrategyConfiguration
+        ),
+        enabled: getTradingConfigurationResponse.enabled,
+      })
+    );
 
     this._tradingConfigurations = [
       {
         symbol: 'BTC/USDT',
-        strategyName: 'BuyOnPercentageDecreaseInTimeframeAndSetLimitOrder',
         strategy:
           new BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy(
             86400,
@@ -177,7 +187,26 @@ export class TraderComponent implements OnInit {
             100,
             0.1
           ),
+        enabled: true,
       },
     ];
+  }
+
+  private async updateTradingConfiguration(
+    tradingConfiguration: TradingConfiguration
+  ): Promise<void> {
+    await this.loginService.withLoginErrorHandling(
+      async () =>
+        await this.apiService.editTradingConfiguration({
+          symbolId: this.symbolService.getSymbolIdFromFriendlyName(
+            tradingConfiguration.symbol
+          ),
+          tradingStrategyName:
+            tradingConfiguration.strategy.getTradingStrategyName(),
+          tradingStrategyConfiguration:
+            tradingConfiguration.strategy.toTradingStrategyConfigurationJson(),
+          enabled: tradingConfiguration.enabled,
+        })
+    );
   }
 }

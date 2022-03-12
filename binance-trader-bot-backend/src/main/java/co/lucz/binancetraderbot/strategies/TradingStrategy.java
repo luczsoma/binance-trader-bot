@@ -13,8 +13,8 @@ public abstract class TradingStrategy {
     private BinanceClient binanceClient;
 
     protected TradingStrategy(Duration priceMonitorWindow) {
-        if (priceMonitorWindow.isZero() || priceMonitorWindow.isNegative()) {
-            throw new IllegalArgumentException("price monitor window must be greater than zero");
+        if (priceMonitorWindow == null || priceMonitorWindow.isZero() || priceMonitorWindow.isNegative()) {
+            throw new IllegalArgumentException("price monitor window must not be null and must be greater than zero");
         }
         this.priceMonitorWindow = priceMonitorWindow;
     }
@@ -27,8 +27,8 @@ public abstract class TradingStrategy {
         return binanceClient;
     }
 
-    public final void setBinanceClient(BinanceClient binanceTradeClient) {
-        this.binanceClient = binanceTradeClient;
+    public final void setBinanceClient(BinanceClient binanceClient) {
+        this.binanceClient = binanceClient;
     }
 
     public final void act(String symbolId, List<PriceInfo> priceInfos) {

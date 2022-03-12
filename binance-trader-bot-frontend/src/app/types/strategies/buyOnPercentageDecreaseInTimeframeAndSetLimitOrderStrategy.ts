@@ -1,4 +1,5 @@
 import { Duration } from 'luxon';
+import { TradingStrategyName } from '../tradingStrategyName';
 import { TradingStrategy } from './tradingStrategy';
 
 export class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends TradingStrategy {
@@ -31,6 +32,19 @@ export class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends 
       tradingStrategyConfiguration.buySpendAmount,
       tradingStrategyConfiguration.limitSellPriceRatio
     );
+  }
+
+  public toTradingStrategyConfigurationJson(): string {
+    return JSON.stringify({
+      priceMonitorWindowSeconds: this.priceMonitorWindowSeconds,
+      priceDecreaseTriggerRatio: this.priceDecreaseTriggerRatio,
+      buySpendAmount: this.buySpendAmount,
+      limitSellPriceRatio: this.limitSellPriceRatio,
+    });
+  }
+
+  public getTradingStrategyName(): TradingStrategyName {
+    return 'BuyOnPercentageDecreaseInTimeframeAndSetLimitOrder';
   }
 
   public getFriendlyDescription(): string {

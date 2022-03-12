@@ -29,18 +29,19 @@ public class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends 
                                                                        BigDecimal limitSellPriceRatio) {
         super(priceMonitorWindow);
 
-        if (priceDecreaseTriggerRatio.signum() <= 0) {
-            throw new IllegalArgumentException("price decrease trigger ratio must be greater than zero");
+        if (priceDecreaseTriggerRatio == null || priceDecreaseTriggerRatio.signum() <= 0) {
+            throw new IllegalArgumentException(
+                    "price decrease trigger ratio must not be null and must be greater than zero");
         }
         this.priceDecreaseTriggerRatio = priceDecreaseTriggerRatio;
 
-        if (buySpendAmount.signum() <= 0) {
-            throw new IllegalArgumentException("buy spend amount must be greater than zero");
+        if (buySpendAmount == null || buySpendAmount.signum() <= 0) {
+            throw new IllegalArgumentException("buy spend amount must not be null and must be greater than zero");
         }
         this.buySpendAmount = buySpendAmount;
 
-        if (limitSellPriceRatio.signum() <= 0) {
-            throw new IllegalArgumentException("limit sell price ratio must be greater than zero");
+        if (limitSellPriceRatio == null || limitSellPriceRatio.signum() <= 0) {
+            throw new IllegalArgumentException("limit sell price ratio must not be null and must be greater than zero");
         }
         this.limitSellPriceRatio = limitSellPriceRatio;
     }

@@ -51,7 +51,7 @@ public class BinanceClient {
     @Value("${binance.show-limit-usage}")
     private boolean showLimitUsage;
 
-    private ExchangeInfo exchangeInfo;
+    private final ExchangeInfo exchangeInfo = new ExchangeInfo();
 
     @Bean
     private SpotClientImpl getBinanceSpotClientImpl() {
@@ -86,9 +86,7 @@ public class BinanceClient {
     }
 
     public void cacheExchangeInfo(Set<String> symbols) {
-        if (this.exchangeInfo == null || !this.exchangeInfo.getSymbols().keySet().equals(symbols)) {
-            this.exchangeInfo = this.getExchangeInfo(symbols);
-        }
+        this.exchangeInfo.update(this.getExchangeInfo(symbols));
     }
 
     public ExchangeInfo getExchangeInfo(Set<String> symbols) {
@@ -101,8 +99,12 @@ public class BinanceClient {
         return ExchangeInfo.of(responseJson);
     }
 
-    public void bookTicker(String symbol, WebSocketCallback callback) {
-        this.getBinanceWebsocketClientImpl().bookTicker(symbol, callback);
+    public int bookTicker(String symbol, WebSocketCallback callback) {
+        return this.getBinanceWebsocketClientImpl().bookTicker(symbol, callback);
+    }
+
+    public void closeWebsocketConnection(int connectionId) {
+        this.getBinanceWebsocketClientImpl().closeConnection(connectionId);
     }
 
     public void closeAllWebsocketConnections() {

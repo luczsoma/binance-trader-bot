@@ -1,5 +1,8 @@
+import { TradingStrategyName } from './tradingStrategyName';
+
 export interface CreateTradingConfigurationRequest {
   symbolId: string;
-  tradingStrategyIdentifier: string;
+  tradingStrategyName: TradingStrategyName;
   tradingStrategyConfiguration: string;
+  enabled: boolean;
 }
