@@ -1,8 +1,12 @@
 import { Duration } from 'luxon';
-import { TradingStrategyName } from '../tradingStrategyName';
 import { TradingStrategy } from './tradingStrategy';
 
 export class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends TradingStrategy {
+  public static readonly NAME =
+    'BuyOnPercentageDecreaseInTimeframeAndSetLimitOrder';
+  public static readonly DESCRIPTION =
+    'Megadott időn belüli megadott %-os árfolyamcsökkenés esetén megadott egység vétele, majd megadott %-os nyereséggel limitáras eladási megbízás feladása';
+
   public readonly priceDecreaseTriggerRatio: number;
   public readonly buySpendAmount: number;
   public readonly limitSellPriceRatio: number;
@@ -41,10 +45,6 @@ export class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends 
       buySpendAmount: this.buySpendAmount,
       limitSellPriceRatio: this.limitSellPriceRatio,
     });
-  }
-
-  public getTradingStrategyName(): TradingStrategyName {
-    return 'BuyOnPercentageDecreaseInTimeframeAndSetLimitOrder';
   }
 
   public getFriendlyDescription(): string {

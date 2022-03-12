@@ -1,5 +1,3 @@
-import { TradingStrategyName } from '../tradingStrategyName';
-
 export abstract class TradingStrategy {
   public readonly priceMonitorWindowSeconds: number;
 
@@ -8,6 +6,5 @@ export abstract class TradingStrategy {
   }
 
   public abstract toTradingStrategyConfigurationJson(): string;
-  public abstract getTradingStrategyName(): TradingStrategyName;
   public abstract getFriendlyDescription(): string;
 }

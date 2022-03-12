@@ -7,12 +7,40 @@ import { TradingStrategyName } from '../types/tradingStrategyName';
   providedIn: 'root',
 })
 export class TradingStrategyService {
+  public getTradingStrategyNames(): Set<TradingStrategyName> {
+    return new Set([
+      BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy.NAME,
+    ]);
+  }
+
+  public getTradingStrategyName(
+    tradingStrategy: TradingStrategy
+  ): TradingStrategyName {
+    if (
+      tradingStrategy instanceof
+      BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy
+    ) {
+      return BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy.NAME;
+    }
+
+    throw new Error('unknown trading strategy');
+  }
+
+  public getTradingStrategyDesciption(
+    tradingStrategyName: TradingStrategyName
+  ): string {
+    switch (tradingStrategyName) {
+      case BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy.NAME:
+        return BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy.DESCRIPTION;
+    }
+  }
+
   public getTradingStrategy(
     tradingStrategyName: TradingStrategyName,
     tradingStrategyConfiguration: string
   ): TradingStrategy {
     switch (tradingStrategyName) {
-      case 'BuyOnPercentageDecreaseInTimeframeAndSetLimitOrder':
+      case BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy.NAME:
         return BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy.ofTradingStrategyConfigurationJson(
           tradingStrategyConfiguration
         );

@@ -1,0 +1,25 @@
+<h1 mat-dialog-title>
+  Kereskedési konfiguráció
+  {{ tradingConfiguration ? "szerkesztése" : "létrehozása" }}
+</h1>
+<div mat-dialog-content>
+  <p>Kereskedési stratégia típusa</p>
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Stratégia</mat-label>
+    <mat-select [(value)]="selectedTradingStrategy">
+      <mat-option
+        *ngFor="let tradingStrategyName of tradingStrategyNames"
+        [value]="tradingStrategyName"
+        [matTooltip]="getTradingStrategyDescription(tradingStrategyName)"
+      >
+        {{ getTradingStrategyDescription(tradingStrategyName) }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions align="end">
+  <button mat-stroked-button mat-button mat-dialog-close>Mégsem</button>
+  <button mat-stroked-button color="primary" mat-dialog-close>
+    Konfiguráció mentése
+  </button>
+</div>

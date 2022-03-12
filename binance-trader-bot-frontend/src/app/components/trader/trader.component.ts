@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { ApiService } from 'src/app/services/api.service';
 import { LoginService } from 'src/app/services/login.service';
@@ -8,6 +9,7 @@ import { Balance } from 'src/app/types/balance';
 import { Order } from 'src/app/types/order';
 import { BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy } from 'src/app/types/strategies/buyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy';
 import { TradingConfiguration } from 'src/app/types/tradingConfiguration';
+import { CreateOrEditTradingStrategyDialogComponent } from '../create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog.component';
 
 @Component({
   selector: 'binance-trader-bot-frontend-trader',
@@ -70,7 +72,8 @@ export class TraderComponent implements OnInit {
     private readonly loginService: LoginService,
     private readonly apiService: ApiService,
     private readonly symbolService: SymbolService,
-    private readonly tradingStrategyService: TradingStrategyService
+    private readonly tradingStrategyService: TradingStrategyService,
+    private readonly dialog: MatDialog
   ) {}
 
   public async ngOnInit(): Promise<void> {
@@ -127,8 +130,20 @@ export class TraderComponent implements OnInit {
   public async editTradingConfiguration(
     tradingConfiguration: TradingConfiguration
   ): Promise<void> {
-    await this.updateTradingConfiguration(tradingConfiguration);
-    this.refreshTradingConfigurations();
+    const dialogRef = this.dialog.open<
+      CreateOrEditTradingStrategyDialogComponent,
+      TradingConfiguration,
+      TradingConfiguration
+    >(CreateOrEditTradingStrategyDialogComponent, {
+      data: tradingConfiguration,
+    });
+
+    dialogRef.afterClosed().subscribe(async (tradingConfiguration) => {
+      if (tradingConfiguration) {
+        await this.updateTradingConfiguration(tradingConfiguration);
+        this.refreshTradingConfigurations();
+      }
+    });
   }
 
   private async refreshBalances(): Promise<void> {
@@ -202,7 +217,9 @@ export class TraderComponent implements OnInit {
             tradingConfiguration.symbol
           ),
           tradingStrategyName:
-            tradingConfiguration.strategy.getTradingStrategyName(),
+            this.tradingStrategyService.getTradingStrategyName(
+              tradingConfiguration.strategy
+            ),
           tradingStrategyConfiguration:
             tradingConfiguration.strategy.toTradingStrategyConfigurationJson(),
           enabled: tradingConfiguration.enabled,
