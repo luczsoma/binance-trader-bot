@@ -35,6 +35,25 @@ public class ApiController {
     }
 
     @RequestMapping(
+            name = "GetTradableSymbols",
+            path = "get-tradable-symbols",
+            method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public List<String> getTradableSymbols() {
+        return this.traderService.getTradableSymbols();
+    }
+
+    @RequestMapping(
+            name = "GetTradableSymbols",
+            path = "refresh-tradable-symbols",
+            method = RequestMethod.POST
+    )
+    public void refreshTradableSymbols() {
+        this.traderService.refreshTradableSymbols();
+    }
+
+    @RequestMapping(
             name = "CreateTradingConfiguration",
             path = "create-trading-configuration",
             method = RequestMethod.POST,

@@ -7,7 +7,7 @@ import { TradingStrategyName } from '../types/tradingStrategyName';
   providedIn: 'root',
 })
 export class TradingStrategyService {
-  public getTradingStrategyNames(): Set<TradingStrategyName> {
+  public getTradingStrategies(): Set<TradingStrategyName> {
     return new Set([
       BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy.NAME,
     ]);

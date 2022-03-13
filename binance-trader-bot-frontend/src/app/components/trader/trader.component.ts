@@ -9,6 +9,7 @@ import { Balance } from 'src/app/types/balance';
 import { Order } from 'src/app/types/order';
 import { BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy } from 'src/app/types/strategies/buyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy';
 import { TradingConfiguration } from 'src/app/types/tradingConfiguration';
+import { TradingStrategyName } from 'src/app/types/tradingStrategyName';
 import { CreateOrEditTradingStrategyDialogComponent } from '../create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog.component';
 
 @Component({
@@ -19,6 +20,7 @@ import { CreateOrEditTradingStrategyDialogComponent } from '../create-or-edit-tr
 export class TraderComponent implements OnInit {
   private _loaded = false;
 
+  private _tradableSymbols = new Set<string>();
   private _balances: Balance[] = [];
   private _openOrders: Order[] = [];
   private _isTradingEnabled = true;
@@ -26,6 +28,10 @@ export class TraderComponent implements OnInit {
 
   public get loaded(): boolean {
     return this._loaded;
+  }
+
+  public get tradableSymbols(): Set<string> {
+    return this._tradableSymbols;
   }
 
   public get balances(): Balance[] {
@@ -78,6 +84,7 @@ export class TraderComponent implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     await Promise.all([
+      this.refreshTradableSymbols(),
       this.refreshBalances(),
       this.refreshOpenOrders(),
       this.refreshIsTradingEnabled(),
@@ -91,6 +98,7 @@ export class TraderComponent implements OnInit {
     this._loaded = false;
 
     await Promise.all([
+      this.refreshTradableSymbols(),
       this.refreshBalances(),
       this.refreshOpenOrders(),
       this.refreshIsTradingEnabled(),
@@ -132,10 +140,19 @@ export class TraderComponent implements OnInit {
   ): Promise<void> {
     const dialogRef = this.dialog.open<
       CreateOrEditTradingStrategyDialogComponent,
-      TradingConfiguration,
+      {
+        tradingConfiguration: TradingConfiguration | undefined;
+        tradableSymbols: Set<string>;
+        tradingStrategies: Set<TradingStrategyName>;
+      },
       TradingConfiguration
     >(CreateOrEditTradingStrategyDialogComponent, {
-      data: tradingConfiguration,
+      data: {
+        tradingConfiguration,
+        tradableSymbols: this.tradableSymbols,
+        tradingStrategies: this.tradingStrategyService.getTradingStrategies(),
+      },
+      autoFocus: 'dialog',
     });
 
     dialogRef.afterClosed().subscribe(async (tradingConfiguration) => {
@@ -144,6 +161,24 @@ export class TraderComponent implements OnInit {
         this.refreshTradingConfigurations();
       }
     });
+  }
+
+  public async refreshTradableSymbols(force = false): Promise<void> {
+    if (force) {
+      await this.loginService.withLoginErrorHandling(
+        async () => await this.apiService.refreshTradableSymbols()
+      );
+    }
+
+    const tradableSymbolsResponse =
+      await this.loginService.withLoginErrorHandling(
+        async () => await this.apiService.getTradableSymbols()
+      );
+    this._tradableSymbols = new Set(
+      tradableSymbolsResponse.map((symbolId) =>
+        this.symbolService.getFriendlyNameFromSymbolId(symbolId)
+      )
+    );
   }
 
   private async refreshBalances(): Promise<void> {
@@ -197,7 +232,7 @@ export class TraderComponent implements OnInit {
         symbol: 'BTC/USDT',
         strategy:
           new BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy(
-            86400,
+            9823492,
             0.1,
             100,
             0.1

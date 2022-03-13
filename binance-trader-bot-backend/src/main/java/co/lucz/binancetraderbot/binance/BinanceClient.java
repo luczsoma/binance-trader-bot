@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,8 @@ import java.util.Set;
 
 @Service
 public class BinanceClient {
+    private ExchangeInfo exchangeInfoCache;
+
     @Value("${binance.rest-api-base-url}")
     private String restApiBaseUrl;
 
@@ -50,8 +53,6 @@ public class BinanceClient {
 
     @Value("${binance.show-limit-usage}")
     private boolean showLimitUsage;
-
-    private final ExchangeInfo exchangeInfo = new ExchangeInfo();
 
     @Bean
     private SpotClientImpl getBinanceSpotClientImpl() {
@@ -85,18 +86,11 @@ public class BinanceClient {
         return this.getBinanceSpotClientImpl().createUserData();
     }
 
-    public void cacheExchangeInfo(Set<String> symbols) {
-        this.exchangeInfo.update(this.getExchangeInfo(symbols));
-    }
-
-    public ExchangeInfo getExchangeInfo(Set<String> symbols) {
-        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-        if (!symbols.isEmpty()) {
-            parameters.put("symbols", new ArrayList<>(symbols));
+    public ExchangeInfo getExchangeInfo(boolean refresh) {
+        if (this.exchangeInfoCache == null || refresh) {
+            this.exchangeInfoCache = this.getExchangeInfo(Collections.emptySet());
         }
-        String response = this.getMarket().exchangeInfo(parameters);
-        JSONObject responseJson = new JSONObject(response);
-        return ExchangeInfo.of(responseJson);
+        return exchangeInfoCache;
     }
 
     public int bookTicker(String symbol, WebSocketCallback callback) {
@@ -172,8 +166,18 @@ public class BinanceClient {
         return OpenOrderResponse.of(openOrders);
     }
 
+    private ExchangeInfo getExchangeInfo(Set<String> symbols) {
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+        if (!symbols.isEmpty()) {
+            parameters.put("symbols", new ArrayList<>(symbols));
+        }
+        String response = this.getMarket().exchangeInfo(parameters);
+        JSONObject responseJson = new JSONObject(response);
+        return ExchangeInfo.of(responseJson);
+    }
+
     private String validateQuantity(String symbol, BigDecimal quantity) {
-        Symbol symbolInfo = this.exchangeInfo.getSymbols().get(symbol);
+        Symbol symbolInfo = this.exchangeInfoCache.getSymbols().get(symbol);
 
         BigDecimal scaledQuantity = quantity.setScale(symbolInfo.getBaseAssetPrecision(), RoundingMode.HALF_UP);
 
@@ -198,7 +202,7 @@ public class BinanceClient {
     }
 
     private String validateQuoteOrderQuantity(String symbol, BigDecimal amountToSpend) {
-        Symbol symbolInfo = this.exchangeInfo.getSymbols().get(symbol);
+        Symbol symbolInfo = this.exchangeInfoCache.getSymbols().get(symbol);
 
         // We do not validate against LOT_SIZE here, since it would require the current market price.
         // It's unlikely to run into minQty or maxQty issues, and stepSize is handled by Binance.
@@ -207,7 +211,7 @@ public class BinanceClient {
     }
 
     private String validatePrice(String symbol, BigDecimal price) {
-        Symbol symbolInfo = this.exchangeInfo.getSymbols().get(symbol);
+        Symbol symbolInfo = this.exchangeInfoCache.getSymbols().get(symbol);
 
         BigDecimal scaledPrice = price.setScale(symbolInfo.getQuoteAssetPrecision(), RoundingMode.HALF_UP);
 

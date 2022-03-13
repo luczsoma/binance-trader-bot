@@ -1,6 +1,6 @@
 <form class="login-form">
   <p>
-    <mat-form-field class="full-width" appearance="fill">
+    <mat-form-field class="full-width">
       <mat-label>Email-cím</mat-label>
       <input
         type="email"
@@ -10,19 +10,25 @@
       />
       <mat-error
         *ngIf="
-          emailFormControl.hasError('email') &&
-          !emailFormControl.hasError('required')
+          emailFormControl.invalid &&
+          (emailFormControl.dirty || emailFormControl.touched)
         "
       >
-        Írjon be <strong>érvényes</strong> email-címet.
-      </mat-error>
-      <mat-error *ngIf="emailFormControl.hasError('required')">
-        Email-címet megadni <strong>kötelező</strong>.
+        <span *ngIf="emailFormControl.hasError('required')"
+          >Email-címet megadni <strong>kötelező</strong>.</span
+        >
+        <span
+          *ngIf="
+            emailFormControl.hasError('email') &&
+            !emailFormControl.hasError('required')
+          "
+          >Írjon be <strong>érvényes</strong> email-címet.</span
+        >
       </mat-error>
     </mat-form-field>
   </p>
   <p>
-    <mat-form-field class="full-width" appearance="fill">
+    <mat-form-field class="full-width">
       <mat-label>Jelszó</mat-label>
       <input
         type="password"
@@ -30,8 +36,15 @@
         [formControl]="passwordFormControl"
         placeholder="Pl. xSiNoYCdi2auf3MbfD2Usm52Pjq4oIrP"
       />
-      <mat-error *ngIf="passwordFormControl.hasError('required')">
-        Jeszót megadni <strong>kötelező</strong>.
+      <mat-error
+        *ngIf="
+          passwordFormControl.invalid &&
+          (passwordFormControl.dirty || passwordFormControl.touched)
+        "
+      >
+        <span *ngIf="passwordFormControl.hasError('required')">
+          Jeszót megadni <strong>kötelező</strong>.</span
+        >
       </mat-error>
     </mat-form-field>
   </p>

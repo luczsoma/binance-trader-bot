@@ -1,25 +1,281 @@
 <h1 mat-dialog-title>
   Kereskedési konfiguráció
-  {{ tradingConfiguration ? "szerkesztése" : "létrehozása" }}
+  {{ data.tradingConfiguration ? "szerkesztése" : "létrehozása" }}
 </h1>
+
 <div mat-dialog-content>
-  <p>Kereskedési stratégia típusa</p>
-  <mat-form-field class="full-width" appearance="fill">
-    <mat-label>Stratégia</mat-label>
-    <mat-select [(value)]="selectedTradingStrategy">
-      <mat-option
-        *ngFor="let tradingStrategyName of tradingStrategyNames"
-        [value]="tradingStrategyName"
-        [matTooltip]="getTradingStrategyDescription(tradingStrategyName)"
+  <h3>Kereskedési pár és stratégia</h3>
+
+  <p>
+    <mat-form-field class="full-width">
+      <mat-label>Kereskedési pár</mat-label>
+      <input
+        type="text"
+        placeholder="Válassz…"
+        aria-label="Kereskedési pár"
+        matInput
+        [formControl]="tradingPair"
+        [matAutocomplete]="auto"
+      />
+      <mat-autocomplete #auto="matAutocomplete">
+        <mat-option
+          *ngFor="let tradingPair of filteredTradingPairs | async"
+          [value]="tradingPair"
+        >
+          {{ tradingPair }}
+        </mat-option>
+      </mat-autocomplete>
+      <mat-error
+        *ngIf="
+          tradingPair.invalid && (tradingPair.dirty || tradingPair.touched)
+        "
       >
-        {{ getTradingStrategyDescription(tradingStrategyName) }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
+        <span *ngIf="tradingPair.hasError('required')">
+          Kereskedési párt megadni <strong>kötelező</strong>.
+        </span>
+        <span *ngIf="tradingPair.hasError('forbiddenValue')">
+          Válasszon <strong>létező</strong> kereskedési párt.
+        </span>
+      </mat-error>
+    </mat-form-field>
+  </p>
+
+  <p>
+    <mat-form-field class="full-width">
+      <mat-label>Kereskedési stratégia típusa</mat-label>
+      <mat-select [formControl]="tradingStrategy">
+        <mat-option
+          *ngFor="let tradingStrategyName of data.tradingStrategies"
+          [value]="tradingStrategyName"
+          [matTooltip]="getTradingStrategyDescription(tradingStrategyName)"
+        >
+          {{ getTradingStrategyDescription(tradingStrategyName) }}
+        </mat-option>
+      </mat-select>
+      <mat-error
+        *ngIf="
+          tradingStrategy.invalid &&
+          (tradingStrategy.dirty || tradingStrategy.touched)
+        "
+      >
+        <span *ngIf="tradingStrategy.hasError('required')">
+          Kereskedési stratégiát megadni <strong>kötelező</strong>.
+        </span>
+        <span *ngIf="tradingStrategy.hasError('forbiddenValue')">
+          Válasszon <strong>létező</strong> kereskedési stratégiát.
+        </span>
+      </mat-error>
+    </mat-form-field>
+  </p>
+
+  <ng-container
+    *ngIf="
+      tradingPair.value &&
+      tradingPair.valid &&
+      tradingStrategy.value &&
+      tradingStrategy.valid
+    "
+  >
+    <hr />
+
+    <h4>Árfolyamfigyelési időablak</h4>
+
+    <p>
+      <mat-form-field class="half-width">
+        <mat-label>Nap</mat-label>
+        <input matInput [formControl]="priceMonitorWindowDays" type="number" />
+        <mat-error
+          *ngIf="
+            priceMonitorWindowDays.invalid &&
+            (priceMonitorWindowDays.dirty || priceMonitorWindowDays.touched)
+          "
+        >
+          <span *ngIf="priceMonitorWindowDays.hasError('required')">
+            Napot megadni <strong>kötelező</strong>.
+          </span>
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="half-width">
+        <mat-label>Óra</mat-label>
+        <input matInput [formControl]="priceMonitorWindowHours" type="number" />
+        <mat-error
+          *ngIf="
+            priceMonitorWindowHours.invalid &&
+            (priceMonitorWindowHours.dirty || priceMonitorWindowHours.touched)
+          "
+        >
+          <span *ngIf="priceMonitorWindowHours.hasError('required')">
+            Órát megadni <strong>kötelező</strong>.
+          </span>
+        </mat-error>
+      </mat-form-field>
+    </p>
+
+    <p>
+      <mat-form-field class="half-width">
+        <mat-label>Perc</mat-label>
+        <input
+          matInput
+          [formControl]="priceMonitorWindowMinutes"
+          type="number"
+        />
+        <mat-error
+          *ngIf="
+            priceMonitorWindowMinutes.invalid &&
+            (priceMonitorWindowMinutes.dirty ||
+              priceMonitorWindowMinutes.touched)
+          "
+        >
+          <span *ngIf="priceMonitorWindowMinutes.hasError('required')">
+            Percet megadni <strong>kötelező</strong>.
+          </span>
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="half-width">
+        <mat-label>Másodperc</mat-label>
+        <input
+          matInput
+          [formControl]="priceMonitorWindowSeconds"
+          type="number"
+        />
+        <mat-error
+          *ngIf="
+            priceMonitorWindowSeconds.invalid &&
+            (priceMonitorWindowSeconds.dirty ||
+              priceMonitorWindowSeconds.touched)
+          "
+        >
+          <span *ngIf="priceMonitorWindowSeconds.hasError('required')">
+            Másodpercet megadni <strong>kötelező</strong>.
+          </span>
+        </mat-error>
+      </mat-form-field>
+    </p>
+
+    <hr />
+
+    <h4>A stratégia egyéb értékei</h4>
+
+    <ng-container [ngSwitch]="tradingStrategy.value">
+      <ng-container
+        *ngSwitchCase="'BuyOnPercentageDecreaseInTimeframeAndSetLimitOrder'"
+      >
+        <p>
+          <mat-form-field class="full-width">
+            <mat-label>Árfolyamcsökkenés</mat-label>
+            <input
+              matInput
+              [formControl]="
+                buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm.priceDecreaseTriggerPercentage
+              "
+              type="number"
+            />
+            <span matSuffix>%</span>
+            <mat-error
+              *ngIf="
+                buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm
+                  .priceDecreaseTriggerPercentage.invalid &&
+                (buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm
+                  .priceDecreaseTriggerPercentage.dirty ||
+                  buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm
+                    .priceDecreaseTriggerPercentage.touched)
+              "
+            >
+              <span
+                *ngIf="
+                  buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm.priceDecreaseTriggerPercentage.hasError(
+                    'required'
+                  )
+                "
+              >
+                Árfolyamcsökkenési értéket megadni <strong>kötelező</strong>.
+              </span>
+            </mat-error>
+          </mat-form-field>
+        </p>
+
+        <p>
+          <mat-form-field class="full-width">
+            <mat-label>Vásárlási érték</mat-label>
+            <input
+              matInput
+              [formControl]="
+                buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm.buySpendAmount
+              "
+              type="number"
+            />
+            <span matSuffix>{{ quoteCurrency }}</span>
+            <mat-error
+              *ngIf="
+                buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm
+                  .buySpendAmount.invalid &&
+                (buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm
+                  .buySpendAmount.dirty ||
+                  buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm
+                    .buySpendAmount.touched)
+              "
+            >
+              <span
+                *ngIf="
+                  buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm.buySpendAmount.hasError(
+                    'required'
+                  )
+                "
+              >
+                Vásárlási értéket megadni <strong>kötelező</strong>.
+              </span>
+            </mat-error>
+          </mat-form-field>
+        </p>
+
+        <p>
+          <mat-form-field class="full-width">
+            <mat-label>Eladási nyereség</mat-label>
+            <input
+              matInput
+              [formControl]="
+                buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm.limitSellPricePercentage
+              "
+              type="number"
+            />
+            <span matSuffix>%</span>
+            <mat-error
+              *ngIf="
+                buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm
+                  .limitSellPricePercentage.invalid &&
+                (buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm
+                  .limitSellPricePercentage.dirty ||
+                  buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm
+                    .limitSellPricePercentage.touched)
+              "
+            >
+              <span
+                *ngIf="
+                  buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm.limitSellPricePercentage.hasError(
+                    'required'
+                  )
+                "
+              >
+                Eladási nyereséget megadni <strong>kötelező</strong>.
+              </span>
+            </mat-error>
+          </mat-form-field>
+        </p>
+      </ng-container>
+    </ng-container>
+  </ng-container>
 </div>
+
 <div mat-dialog-actions align="end">
   <button mat-stroked-button mat-button mat-dialog-close>Mégsem</button>
-  <button mat-stroked-button color="primary" mat-dialog-close>
+  <button
+    mat-stroked-button
+    color="primary"
+    (click)="save()"
+    [disabled]="!isValid()"
+  >
     Konfiguráció mentése
   </button>
 </div>

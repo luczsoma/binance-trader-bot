@@ -3,6 +3,8 @@ package co.lucz.binancetraderbot.services;
 import co.lucz.binancetraderbot.binance.BinanceClient;
 import co.lucz.binancetraderbot.binance.entities.Balance;
 import co.lucz.binancetraderbot.binance.entities.OpenOrderResponse;
+import co.lucz.binancetraderbot.binance.entities.Symbol;
+import co.lucz.binancetraderbot.binance.entities.enums.SymbolStatus;
 import co.lucz.binancetraderbot.entities.GlobalTradingLock;
 import co.lucz.binancetraderbot.entities.TradingConfiguration;
 import co.lucz.binancetraderbot.exceptions.internal.BadRequestException;
@@ -63,6 +65,17 @@ public class TraderService {
 
     // region API interface
 
+    public List<String> getTradableSymbols() {
+        return this.binanceClient.getExchangeInfo(false).getSymbols().values().stream()
+                .filter(symbol -> symbol.getStatus() == SymbolStatus.TRADING)
+                .map(s -> SymbolHelpers.getSymbolId(s.getBaseAsset(), s.getQuoteAsset()))
+                .collect(Collectors.toList());
+    }
+
+    public void refreshTradableSymbols() {
+        this.binanceClient.getExchangeInfo(true);
+    }
+
     public List<GetTradingConfigurationResponse> getTradingConfigurations() {
         List<GetTradingConfigurationResponse> getTradingConfigurationResponses = new ArrayList<>();
         this.tradingConfigurationRepository.findAll().forEach(
@@ -82,7 +95,7 @@ public class TraderService {
             throw new SymbolAlreadyExistsException("trading configuration for given symbol already exists");
         }
 
-        this.validateSymbol(symbolId);
+        this.validateTradableSymbol(symbolId);
 
         TradingStrategyName tradingStrategyName = this.validateTradingStrategyName(request.getTradingStrategyName());
         String tradingStrategyConfiguration = request.getTradingStrategyConfiguration();
@@ -101,7 +114,7 @@ public class TraderService {
     public void editTradingConfiguration(EditTradingConfigurationRequest request) {
         String symbolId = request.getSymbolId().toUpperCase();
         TradingConfiguration tradingConfiguration = this.tradingConfigurationRepository.findBySymbolId(symbolId)
-                .orElseThrow(() -> new BadRequestException("no such symbol id"));
+                .orElseThrow(() -> new BadRequestException("no such trading configuration for symbol id"));
 
         TradingStrategyName tradingStrategyName = this.validateTradingStrategyName(request.getTradingStrategyName());
 
@@ -169,12 +182,6 @@ public class TraderService {
         this.tradingConfigurationRepository.findAll().forEach(
                 tradingConfiguration -> this.tradingConfigurationsCache.put(tradingConfiguration.getSymbolId(),
                                                                             tradingConfiguration));
-
-        Set<String> symbols = this.tradingConfigurationsCache.keySet().stream()
-                .map(SymbolHelpers::getSymbol)
-                .collect(Collectors.toSet());
-        this.binanceClient.cacheExchangeInfo(symbols);
-
         this.tradingConfigurationsCache.keySet().forEach(this::subscribeTradingStrategy);
     }
 
@@ -272,12 +279,14 @@ public class TraderService {
         return Collections.max(priceMonitorWindows);
     }
 
-    private void validateSymbol(String symbolId) {
+    private void validateTradableSymbol(String symbolId) {
         String symbol = SymbolHelpers.getSymbol(symbolId);
-        try {
-            this.binanceClient.cacheExchangeInfo(Set.of(symbol));
-        } catch (Exception ex) {
-            throw new BadRequestException("invalid symbol id");
+        Symbol s = this.binanceClient.getExchangeInfo(false).getSymbols().get(symbol);
+        if (s == null) {
+            throw new BadRequestException("not existing symbol");
+        }
+        if (s.getStatus() != SymbolStatus.TRADING) {
+            throw new BadRequestException("not tradable symbol");
         }
     }
 

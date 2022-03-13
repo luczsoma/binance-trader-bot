@@ -5,7 +5,7 @@ export class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends 
   public static readonly NAME =
     'BuyOnPercentageDecreaseInTimeframeAndSetLimitOrder';
   public static readonly DESCRIPTION =
-    'Megadott időn belüli megadott %-os árfolyamcsökkenés esetén megadott egység vétele, majd megadott %-os nyereséggel limitáras eladási megbízás feladása';
+    'Megadott árfolyamfigyelési időablakon belüli megadott %-os árfolyamcsökkenés esetén vásárlás megadott értékben, majd megadott %-os nyereséggel limitáras eladási megbízás feladása';
 
   public readonly priceDecreaseTriggerRatio: number;
   public readonly buySpendAmount: number;

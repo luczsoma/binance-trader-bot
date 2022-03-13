@@ -26,6 +26,22 @@ export class ApiService {
 
   public constructor(private readonly loginService: LoginService) {}
 
+  public getTradableSymbols(): Promise<string[]> {
+    return this.call<string[]>(
+      'get-tradable-symbols',
+      'GET',
+      this.responseProcessors.json
+    );
+  }
+
+  public refreshTradableSymbols(): Promise<void> {
+    return this.call<void>(
+      'refresh-tradable-symbols',
+      'POST',
+      this.responseProcessors.void
+    );
+  }
+
   public getTradingConfigurations(): Promise<
     GetTradingConfigurationResponse[]
   > {

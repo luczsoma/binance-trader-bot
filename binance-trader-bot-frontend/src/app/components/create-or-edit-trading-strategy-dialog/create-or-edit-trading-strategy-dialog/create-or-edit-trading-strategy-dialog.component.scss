@@ -1,5 +1,21 @@
+@import "../../../../styles/colors.scss";
+
 :host {
+  hr {
+    border: 0;
+    border-top: 1px solid $border;
+    margin: 0 0 20px;
+  }
+
   .full-width {
     width: 100%;
+  }
+
+  .half-width {
+    width: calc(50% - 10px);
+
+    &:first-child {
+      margin-right: 20px;
+    }
   }
 }
