@@ -156,6 +156,29 @@
               ></tr>
             </table>
           </div>
+
+          <div id="update-symbols">
+            <h2>Kereskedési párok frissítése</h2>
+            <p>
+              Ha kereskedési konfiguráció hozzáadásakor nem látható egy
+              Binance-en kereskedhető kereskedési pár, az alábbi gombbal
+              frissíthető a Ketyere adatbázisa.
+              <strong
+                >Vigyázat: ez egy költséges művelet, túl gyakori frissítés a
+                Ketyere leállásához vezethet.</strong
+              >
+            </p>
+            <p>
+              <button
+                id="refresh-symbols"
+                mat-stroked-button
+                color="warn"
+                (click)="refreshTradableSymbols(true)"
+              >
+                Kereskedési párok frissítése
+              </button>
+            </p>
+          </div>
         </div>
       </ng-container>
     </div>
