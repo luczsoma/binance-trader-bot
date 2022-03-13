@@ -1,12 +1,7 @@
 
 # Binance trader bot application
 
-Create a `.env` file with the necessary data, then source it:
-
-```bash
-cp .env.example .env
-source .env
-```
+Fill `application.properties` with the necessary data for connecting to Binance.
 
 For development, start the development server, which will make the API accessible on http://localhost:8080:
 

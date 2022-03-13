@@ -7,7 +7,6 @@ import { SymbolService } from 'src/app/services/symbol.service';
 import { TradingStrategyService } from 'src/app/services/trading-strategy.service';
 import { Balance } from 'src/app/types/balance';
 import { Order } from 'src/app/types/order';
-import { BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy } from 'src/app/types/strategies/buyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy';
 import { TradingConfiguration } from 'src/app/types/tradingConfiguration';
 import { TradingStrategyName } from 'src/app/types/tradingStrategyName';
 import { CreateOrEditTradingStrategyDialogComponent } from '../create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog.component';
@@ -130,18 +129,42 @@ export class TraderComponent implements OnInit {
   ): Promise<void> {
     const enabled = event.checked;
     tradingConfiguration.enabled = enabled;
-    await this.updateTradingConfiguration(tradingConfiguration);
+    await this.editTradingConfiguration(tradingConfiguration);
 
     this.refreshTradingConfigurations();
   }
 
-  public async editTradingConfiguration(
+  public async addTradingConfiguration(): Promise<void> {
+    const dialogRef = this.dialog.open<
+      CreateOrEditTradingStrategyDialogComponent,
+      {
+        tradableSymbols: Set<string>;
+        tradingStrategies: Set<TradingStrategyName>;
+      },
+      TradingConfiguration
+    >(CreateOrEditTradingStrategyDialogComponent, {
+      data: {
+        tradableSymbols: this.tradableSymbols,
+        tradingStrategies: this.tradingStrategyService.getTradingStrategies(),
+      },
+      autoFocus: 'dialog',
+    });
+
+    dialogRef.afterClosed().subscribe(async (tradingConfiguration) => {
+      if (tradingConfiguration) {
+        await this.createTradingConfiguration(tradingConfiguration);
+        this.refreshTradingConfigurations();
+      }
+    });
+  }
+
+  public async modifyTradingConfiguration(
     tradingConfiguration: TradingConfiguration
   ): Promise<void> {
     const dialogRef = this.dialog.open<
       CreateOrEditTradingStrategyDialogComponent,
       {
-        tradingConfiguration: TradingConfiguration | undefined;
+        tradingConfiguration: TradingConfiguration;
         tradableSymbols: Set<string>;
         tradingStrategies: Set<TradingStrategyName>;
       },
@@ -157,7 +180,7 @@ export class TraderComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(async (tradingConfiguration) => {
       if (tradingConfiguration) {
-        await this.updateTradingConfiguration(tradingConfiguration);
+        await this.editTradingConfiguration(tradingConfiguration);
         this.refreshTradingConfigurations();
       }
     });
@@ -226,23 +249,29 @@ export class TraderComponent implements OnInit {
         enabled: getTradingConfigurationResponse.enabled,
       })
     );
-
-    this._tradingConfigurations = [
-      {
-        symbol: 'BTC/USDT',
-        strategy:
-          new BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy(
-            86400,
-            0.1,
-            100,
-            0.1
-          ),
-        enabled: true,
-      },
-    ];
   }
 
-  private async updateTradingConfiguration(
+  private async createTradingConfiguration(
+    tradingConfiguration: TradingConfiguration
+  ): Promise<void> {
+    await this.loginService.withLoginErrorHandling(
+      async () =>
+        await this.apiService.createTradingConfiguration({
+          symbolId: this.symbolService.getSymbolIdFromFriendlyName(
+            tradingConfiguration.symbol
+          ),
+          tradingStrategyName:
+            this.tradingStrategyService.getTradingStrategyName(
+              tradingConfiguration.strategy
+            ),
+          tradingStrategyConfiguration:
+            tradingConfiguration.strategy.toTradingStrategyConfigurationJson(),
+          enabled: tradingConfiguration.enabled,
+        })
+    );
+  }
+
+  private async editTradingConfiguration(
     tradingConfiguration: TradingConfiguration
   ): Promise<void> {
     await this.loginService.withLoginErrorHandling(

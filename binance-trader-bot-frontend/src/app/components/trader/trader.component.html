@@ -102,6 +102,16 @@
             <p *ngIf="!hasTradingConfigurations">
               Jelenleg nincsen egyetlen kereskedési konfigurációja sem.
             </p>
+            <p>
+              <button
+                id="add-trading-configuration"
+                mat-stroked-button
+                color="primary"
+                (click)="addTradingConfiguration()"
+              >
+                Új kereskedési konfiguráció hozzáadása
+              </button>
+            </p>
             <table
               *ngIf="hasTradingConfigurations"
               mat-table
@@ -139,7 +149,7 @@
                     id="refresh-data-button"
                     mat-stroked-button
                     color="primary"
-                    (click)="editTradingConfiguration(tradingConfiguration)"
+                    (click)="modifyTradingConfiguration(tradingConfiguration)"
                   >
                     Módosítás
                   </button>

@@ -52,7 +52,7 @@ export class CreateOrEditTradingStrategyDialogComponent {
     private readonly dialogRef: MatDialogRef<CreateOrEditTradingStrategyDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
     public readonly data: {
-      tradingConfiguration: TradingConfiguration | undefined;
+      tradingConfiguration?: TradingConfiguration;
       tradableSymbols: Set<string>;
       tradingStrategies: Set<TradingStrategyName>;
     },

@@ -79,11 +79,12 @@ public class TraderService {
     public List<GetTradingConfigurationResponse> getTradingConfigurations() {
         List<GetTradingConfigurationResponse> getTradingConfigurationResponses = new ArrayList<>();
         this.tradingConfigurationRepository.findAll().forEach(
-                tradingConfiguration -> new GetTradingConfigurationResponse(
-                        tradingConfiguration.getSymbolId(),
-                        tradingConfiguration.getTradingStrategyName(),
-                        tradingConfiguration.getTradingStrategyConfiguration(),
-                        tradingConfiguration.getEnabled()
+                tradingConfiguration -> getTradingConfigurationResponses.add(new GetTradingConfigurationResponse(
+                                                             tradingConfiguration.getSymbolId(),
+                                                             tradingConfiguration.getTradingStrategyName(),
+                                                             tradingConfiguration.getTradingStrategyConfiguration(),
+                                                             tradingConfiguration.getEnabled()
+                                                     )
                 )
         );
         return getTradingConfigurationResponses;
