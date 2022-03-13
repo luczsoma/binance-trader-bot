@@ -48,14 +48,14 @@ export class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends 
   }
 
   public getFriendlyDescription(): string {
-    const friendlyPriceMonitorWindowSeconds = Duration.fromObject(
+    const friendlyPriceMonitorWindowDuration = Duration.fromObject(
       { seconds: this.priceMonitorWindowSeconds },
       { locale: 'hu' }
     )
       .shiftTo('days', 'hours', 'minutes', 'seconds')
-      .toHuman({ listStyle: 'short' });
+      .toHuman({ listStyle: 'long' });
     const priceDecreaseTriggerPercentage = this.priceDecreaseTriggerRatio * 100;
     const limitSellPricePercentage = this.limitSellPriceRatio * 100;
-    return `${friendlyPriceMonitorWindowSeconds} időn belüli ${priceDecreaseTriggerPercentage}%-os árfolyamcsökkenés esetén ${this.buySpendAmount} egység vétele, majd ${limitSellPricePercentage}%-os nyereséggel limitáras eladási megbízás feladása`;
+    return `${friendlyPriceMonitorWindowDuration} időn belüli ${priceDecreaseTriggerPercentage}%-os árfolyamcsökkenés esetén ${this.buySpendAmount} egység vásárlása, majd ${limitSellPricePercentage}%-os nyereséggel limitáras eladási megbízás feladása`;
   }
 }

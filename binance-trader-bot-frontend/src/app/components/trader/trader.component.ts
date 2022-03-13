@@ -232,7 +232,7 @@ export class TraderComponent implements OnInit {
         symbol: 'BTC/USDT',
         strategy:
           new BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy(
-            9823492,
+            86400,
             0.1,
             100,
             0.1
