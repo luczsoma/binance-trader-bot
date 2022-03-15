@@ -19,11 +19,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppComponent } from '../components/app/app.component';
+import { ApprovalDialogComponent } from '../components/approval-dialog/approval-dialog.component';
 import { CreateOrEditTradingStrategyDialogComponent } from '../components/create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog.component';
 import { LoginComponent } from '../components/login/login.component';
 import { TraderComponent } from '../components/trader/trader.component';
 import { AppRoutingModule } from './app-routing.module';
-import { ApprovalDialogComponent } from '../components/approval-dialog/approval-dialog.component';
 
 @NgModule({
   declarations: [

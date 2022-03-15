@@ -30,6 +30,8 @@ export class CreateOrEditTradingStrategyDialogComponent {
     CustomValidators.allowedValues(this.data.tradingStrategies),
   ]);
 
+  public tradingConfigurationEnabled = false;
+
   public priceMonitorWindowDays = new FormControl('', [Validators.required]);
   public priceMonitorWindowHours = new FormControl('', [Validators.required]);
   public priceMonitorWindowMinutes = new FormControl('', [Validators.required]);
@@ -73,6 +75,8 @@ export class CreateOrEditTradingStrategyDialogComponent {
       const tradingStrategyName =
         this.tradingStrategyService.getTradingStrategyName(tradingStrategy);
       this.tradingStrategy.setValue(tradingStrategyName);
+
+      this.tradingConfigurationEnabled = tradingConfiguration.enabled;
 
       const priceMonitorWindowDuration = Duration.fromObject({
         seconds: tradingConfiguration.strategy.priceMonitorWindowSeconds,
@@ -172,7 +176,7 @@ export class CreateOrEditTradingStrategyDialogComponent {
     const result: TradingConfiguration = {
       symbol: this.tradingPair.value,
       strategy,
-      enabled: this.data.tradingConfiguration?.enabled ?? false,
+      enabled: this.tradingConfigurationEnabled,
     };
     this.dialogRef.close(result);
   }

@@ -68,6 +68,15 @@
     </mat-form-field>
   </p>
 
+  <p id="trading-configuration-enabled">
+    <mat-slide-toggle [(ngModel)]="tradingConfigurationEnabled" color="primary"
+      >Mentés utáni állapot:
+      <strong>{{
+        tradingConfigurationEnabled ? "Bekapcsolva" : "Kikapcsolva"
+      }}</strong></mat-slide-toggle
+    >
+  </p>
+
   <ng-container
     *ngIf="
       tradingPair.value &&
