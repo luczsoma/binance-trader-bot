@@ -90,34 +90,6 @@
 
       <ng-container *ngIf="loaded">
         <div class="tables">
-          <div id="batch-change">
-            <h2>Több konfiguráció együttes módosítása vagy törlése</h2>
-
-            <p *ngIf="!hasTradingConfigurations">
-              Jelenleg nincsen egyetlen kereskedési konfigurációja sem.
-            </p>
-
-            <p>
-              <button
-                mat-stroked-button
-                color="primary"
-                (click)="modifySelectedTradingConfigurations()"
-                [disabled]="!someTradingConfigurationsAreSelected()"
-              >
-                A kijelölt kereskedési konfigurációk módosítása
-              </button>
-              &nbsp;
-              <button
-                mat-stroked-button
-                color="warn"
-                (click)="confirmDeleteSelectedTradingConfigurations()"
-                [disabled]="!someTradingConfigurationsAreSelected()"
-              >
-                A kijelölt kereskedési konfigurációk törlése
-              </button>
-            </p>
-          </div>
-
           <div id="trading-configurations">
             <h2>Kereskedési konfigurációk</h2>
 
@@ -131,7 +103,25 @@
                 color="primary"
                 (click)="addTradingConfiguration()"
               >
-                Új kereskedési konfiguráció hozzáadása
+                Új hozzáadása
+              </button>
+              &nbsp;
+              <button
+                mat-stroked-button
+                color="primary"
+                (click)="modifySelectedTradingConfigurations()"
+                [disabled]="!someTradingConfigurationsAreSelected()"
+              >
+                A kijelöltek módosítása
+              </button>
+              &nbsp;
+              <button
+                mat-stroked-button
+                color="warn"
+                (click)="confirmDeleteSelectedTradingConfigurations()"
+                [disabled]="!someTradingConfigurationsAreSelected()"
+              >
+                A kijelöltek törlése
               </button>
             </p>
 
