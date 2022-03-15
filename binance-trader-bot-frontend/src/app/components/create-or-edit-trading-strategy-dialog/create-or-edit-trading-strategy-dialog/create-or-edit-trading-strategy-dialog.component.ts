@@ -32,15 +32,36 @@ export class CreateOrEditTradingStrategyDialogComponent {
 
   public tradingConfigurationEnabled = false;
 
-  public priceMonitorWindowDays = new FormControl('', [Validators.required]);
-  public priceMonitorWindowHours = new FormControl('', [Validators.required]);
-  public priceMonitorWindowMinutes = new FormControl('', [Validators.required]);
-  public priceMonitorWindowSeconds = new FormControl('', [Validators.required]);
+  public priceMonitorWindowDays = new FormControl('', [
+    Validators.required,
+    Validators.min(0),
+  ]);
+  public priceMonitorWindowHours = new FormControl('', [
+    Validators.required,
+    Validators.min(0),
+  ]);
+  public priceMonitorWindowMinutes = new FormControl('', [
+    Validators.required,
+    Validators.min(0),
+  ]);
+  public priceMonitorWindowSeconds = new FormControl('', [
+    Validators.required,
+    Validators.min(0),
+  ]);
 
   public buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm = {
-    priceDecreaseTriggerPercentage: new FormControl('', [Validators.required]),
-    buySpendAmount: new FormControl('', [Validators.required]),
-    limitSellPricePercentage: new FormControl('', [Validators.required]),
+    priceDecreaseTriggerPercentage: new FormControl('', [
+      Validators.required,
+      Validators.min(0),
+    ]),
+    buySpendAmount: new FormControl('', [
+      Validators.required,
+      Validators.min(0),
+    ]),
+    limitSellPricePercentage: new FormControl('', [
+      Validators.required,
+      Validators.min(0),
+    ]),
   };
 
   public loaded = false;

@@ -110,6 +110,9 @@
           <span *ngIf="priceMonitorWindowDays.hasError('required')">
             Napot megadni <strong>kötelező</strong>.
           </span>
+          <span *ngIf="priceMonitorWindowDays.hasError('min')">
+            Adjon meg <strong>érvényes</strong> értéket.
+          </span>
         </mat-error>
       </mat-form-field>
 
@@ -124,6 +127,9 @@
         >
           <span *ngIf="priceMonitorWindowHours.hasError('required')">
             Órát megadni <strong>kötelező</strong>.
+          </span>
+          <span *ngIf="priceMonitorWindowHours.hasError('min')">
+            Adjon meg <strong>érvényes</strong> értéket.
           </span>
         </mat-error>
       </mat-form-field>
@@ -147,6 +153,9 @@
           <span *ngIf="priceMonitorWindowMinutes.hasError('required')">
             Percet megadni <strong>kötelező</strong>.
           </span>
+          <span *ngIf="priceMonitorWindowMinutes.hasError('min')">
+            Adjon meg <strong>érvényes</strong> értéket.
+          </span>
         </mat-error>
       </mat-form-field>
 
@@ -166,6 +175,9 @@
         >
           <span *ngIf="priceMonitorWindowSeconds.hasError('required')">
             Másodpercet megadni <strong>kötelező</strong>.
+          </span>
+          <span *ngIf="priceMonitorWindowSeconds.hasError('min')">
+            Adjon meg <strong>érvényes</strong> értéket.
           </span>
         </mat-error>
       </mat-form-field>
@@ -209,6 +221,15 @@
               >
                 Árfolyamcsökkenési értéket megadni <strong>kötelező</strong>.
               </span>
+              <span
+                *ngIf="
+                  buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm.priceDecreaseTriggerPercentage.hasError(
+                    'min'
+                  )
+                "
+              >
+                Adjon meg <strong>érvényes</strong> értéket.
+              </span>
             </mat-error>
           </mat-form-field>
         </p>
@@ -243,6 +264,15 @@
               >
                 Vásárlási értéket megadni <strong>kötelező</strong>.
               </span>
+              <span
+                *ngIf="
+                  buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm.buySpendAmount.hasError(
+                    'min'
+                  )
+                "
+              >
+                Adjon meg <strong>érvényes</strong> értéket.
+              </span>
             </mat-error>
           </mat-form-field>
         </p>
@@ -276,6 +306,15 @@
                 "
               >
                 Eladási nyereséget megadni <strong>kötelező</strong>.
+              </span>
+              <span
+                *ngIf="
+                  buyOnPercentageDecreaseInTimeframeAndSetLimitOrderForm.limitSellPricePercentage.hasError(
+                    'min'
+                  )
+                "
+              >
+                Adjon meg <strong>érvényes</strong> értéket.
               </span>
             </mat-error>
           </mat-form-field>
