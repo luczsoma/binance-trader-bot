@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { MatCheckboxChange } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { ApiService } from 'src/app/services/api.service';
@@ -27,6 +28,7 @@ export class TraderComponent implements OnInit {
   private _openOrders: Order[] = [];
   private _isTradingEnabled = true;
   private _tradingConfigurations: TradingConfiguration[] = [];
+  private _selectedTradingConfigurations: Set<string> = new Set();
 
   public get loaded(): boolean {
     return this._loaded;
@@ -73,7 +75,11 @@ export class TraderComponent implements OnInit {
   }
 
   public get tradingConfigurationsColumns(): string[] {
-    return ['status', 'symbol', 'strategy', 'modify', 'delete'];
+    return ['select', 'status', 'symbol', 'strategy', 'modify', 'delete'];
+  }
+
+  public get selectedTradingConfigurations(): Set<string> {
+    return this._selectedTradingConfigurations;
   }
 
   public constructor(
@@ -144,6 +150,7 @@ export class TraderComponent implements OnInit {
       TradingConfiguration
     >(CreateOrEditTradingStrategyDialogComponent, {
       data: {
+        state: 'create',
         tradableSymbols: this.tradableSymbols,
         tradingStrategies: this.tradingStrategyService.getTradingStrategies(),
       },
@@ -167,6 +174,7 @@ export class TraderComponent implements OnInit {
       TradingConfiguration
     >(CreateOrEditTradingStrategyDialogComponent, {
       data: {
+        state: 'editOne',
         tradingConfiguration,
         tradableSymbols: this.tradableSymbols,
         tradingStrategies: this.tradingStrategyService.getTradingStrategies(),
@@ -178,6 +186,44 @@ export class TraderComponent implements OnInit {
       if (tradingConfiguration) {
         await this.editTradingConfiguration(tradingConfiguration);
         this.refreshTradingConfigurations();
+      }
+    });
+  }
+
+  public async modifySelectedTradingConfigurations(): Promise<void> {
+    if (this.selectedTradingConfigurations.size === 1) {
+      const selectedTradingConfiguration = this.tradingConfigurations.find(
+        (tradingConfiguration) =>
+          tradingConfiguration.symbol ===
+          Array.from(this.selectedTradingConfigurations)[0]
+      );
+      if (selectedTradingConfiguration) {
+        this.modifyTradingConfiguration(selectedTradingConfiguration);
+      }
+      return;
+    }
+
+    const dialogRef = this.dialog.open<
+      CreateOrEditTradingStrategyDialogComponent,
+      CreateOrEditTradingStrategyDialogData,
+      TradingConfiguration
+    >(CreateOrEditTradingStrategyDialogComponent, {
+      data: {
+        state: 'editMultiple',
+        tradableSymbols: this.tradableSymbols,
+        tradingStrategies: this.tradingStrategyService.getTradingStrategies(),
+      },
+      autoFocus: 'dialog',
+    });
+
+    dialogRef.afterClosed().subscribe(async (tradingConfiguration) => {
+      if (tradingConfiguration) {
+        await Promise.all(
+          Array.from(this.selectedTradingConfigurations).map((symbol) =>
+            this.editTradingConfiguration({ ...tradingConfiguration, symbol })
+          )
+        );
+        await this.refreshTradingConfigurations();
       }
     });
   }
@@ -245,6 +291,46 @@ export class TraderComponent implements OnInit {
     }
   }
 
+  public toggleTradingConfigurationSelection(
+    change: MatCheckboxChange,
+    tradingConfiguration: TradingConfiguration
+  ): void {
+    if (change.checked) {
+      this.selectedTradingConfigurations.add(tradingConfiguration.symbol);
+    } else {
+      this.selectedTradingConfigurations.delete(tradingConfiguration.symbol);
+    }
+  }
+
+  public isTradingConfigurationSelected(
+    tradingConfiguration: TradingConfiguration
+  ): boolean {
+    return this.selectedTradingConfigurations.has(tradingConfiguration.symbol);
+  }
+
+  public toggleAllTradingConfigurationSelection(
+    change: MatCheckboxChange
+  ): void {
+    if (change.checked) {
+      this.tradingConfigurations.forEach((tradingConfiguration) =>
+        this.selectedTradingConfigurations.add(tradingConfiguration.symbol)
+      );
+    } else {
+      this.selectedTradingConfigurations.clear();
+    }
+  }
+
+  public someTradingConfigurationsAreSelected(): boolean {
+    return this.selectedTradingConfigurations.size > 0;
+  }
+
+  public allTradingConfigurationsAreSelected(): boolean {
+    return (
+      this.selectedTradingConfigurations.size ===
+      this.tradingConfigurations.length
+    );
+  }
+
   private async refreshBalances(): Promise<void> {
     const balances = await this.loginService.withLoginErrorHandling(
       async () => await this.apiService.getBalances()
@@ -293,6 +379,8 @@ export class TraderComponent implements OnInit {
         enabled: getTradingConfigurationResponse.enabled,
       }))
       .sort((a, b) => a.symbol.localeCompare(b.symbol));
+
+    this._selectedTradingConfigurations.clear();
   }
 
   private async createTradingConfiguration(

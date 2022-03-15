@@ -1,12 +1,27 @@
 <h1 mat-dialog-title>
-  Kereskedési konfiguráció
-  {{ editing ? "szerkesztése" : "létrehozása" }}
+  <ng-container *ngIf="data.state === 'create'"
+    >Kereskedési konfiguráció létrehozása</ng-container
+  >
+  <ng-container *ngIf="data.state === 'editOne'"
+    >{{ data.tradingConfiguration!.symbol }} kereskedési konfiguráció
+    módosítása</ng-container
+  >
+  <ng-container *ngIf="data.state === 'editMultiple'"
+    >Több kereskedési konfiguráció módosítása</ng-container
+  >
 </h1>
 
 <div mat-dialog-content>
-  <h3>Kereskedési pár és stratégia</h3>
+  <h3>
+    <ng-container *ngIf="data.state === 'create'">
+      Kereskedési pár és stratégia
+    </ng-container>
+    <ng-container *ngIf="data.state !== 'create'">
+      Kereskedési stratégia
+    </ng-container>
+  </h3>
 
-  <p>
+  <p *ngIf="data.state === 'create'">
     <mat-form-field class="full-width">
       <mat-label>Kereskedési pár</mat-label>
       <input
@@ -16,7 +31,6 @@
         matInput
         [formControl]="tradingPair"
         [matAutocomplete]="tradingPairAutocomplete"
-        [readonly]="editing"
       />
       <mat-autocomplete #tradingPairAutocomplete="matAutocomplete">
         <mat-option
@@ -78,14 +92,7 @@
     >
   </p>
 
-  <ng-container
-    *ngIf="
-      tradingPair.value &&
-      tradingPair.valid &&
-      tradingStrategy.value &&
-      tradingStrategy.valid
-    "
-  >
+  <ng-container *ngIf="tradingStrategy.value && tradingStrategy.valid">
     <hr />
 
     <h4>Árfolyamfigyelési időablak</h4>

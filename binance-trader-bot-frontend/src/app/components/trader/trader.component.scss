@@ -66,6 +66,10 @@
 
       table {
         width: 100%;
+
+        .strategy-description {
+          max-width: 600px;
+        }
       }
     }
   }

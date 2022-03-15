@@ -19,8 +19,6 @@ import { CreateOrEditTradingStrategyDialogData } from './create-or-edit-trading-
   styleUrls: ['./create-or-edit-trading-strategy-dialog.component.scss'],
 })
 export class CreateOrEditTradingStrategyDialogComponent {
-  public readonly editing: boolean;
-
   public tradingPair = new FormControl('', [
     Validators.required,
     CustomValidators.allowedValues(this.data.tradableSymbols),
@@ -48,9 +46,16 @@ export class CreateOrEditTradingStrategyDialogComponent {
   public loaded = false;
 
   public get quoteCurrency(): string {
-    return this.symbolService.getQuoteAssetFromFriendlyName(
-      this.tradingPair.value
-    );
+    switch (this.data.state) {
+      case 'create':
+      case 'editOne':
+        return this.symbolService.getQuoteAssetFromFriendlyName(
+          this.tradingPair.value
+        );
+
+      case 'editMultiple':
+        return 'egység';
+    }
   }
 
   public constructor(
@@ -60,8 +65,6 @@ export class CreateOrEditTradingStrategyDialogComponent {
     private readonly tradingStrategyService: TradingStrategyService,
     private readonly symbolService: SymbolService
   ) {
-    this.editing = this.data.tradingConfiguration !== undefined;
-
     this.filteredTradingPairs = this.tradingPair.valueChanges.pipe(
       startWith(''),
       map((value) =>
@@ -71,19 +74,20 @@ export class CreateOrEditTradingStrategyDialogComponent {
       )
     );
 
-    const tradingConfiguration = this.data.tradingConfiguration;
-    if (tradingConfiguration) {
-      this.tradingPair.setValue(tradingConfiguration.symbol);
+    if (this.data.state === 'editOne') {
+      this.tradingPair.setValue(this.data.tradingConfiguration!.symbol);
 
-      const tradingStrategy = tradingConfiguration.strategy;
+      const tradingStrategy = this.data.tradingConfiguration!.strategy;
       const tradingStrategyName =
         this.tradingStrategyService.getTradingStrategyName(tradingStrategy);
       this.tradingStrategy.setValue(tradingStrategyName);
 
-      this.tradingConfigurationEnabled = tradingConfiguration.enabled;
+      this.tradingConfigurationEnabled =
+        this.data.tradingConfiguration!.enabled;
 
       const priceMonitorWindowDuration = Duration.fromObject({
-        seconds: tradingConfiguration.strategy.priceMonitorWindowSeconds,
+        seconds:
+          this.data.tradingConfiguration!.strategy.priceMonitorWindowSeconds,
       }).shiftTo('days', 'hours', 'minutes', 'seconds');
 
       this.priceMonitorWindowDays.setValue(priceMonitorWindowDuration.days);
@@ -126,8 +130,10 @@ export class CreateOrEditTradingStrategyDialogComponent {
   }
 
   public isValid(): boolean {
-    let strategyFormIsValid = false;
+    let tradingPairIsValid =
+      this.data.state !== 'create' || this.tradingPair.valid;
 
+    let strategyFormIsValid = false;
     switch (this.tradingStrategy.value) {
       case BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy.NAME:
         strategyFormIsValid =
@@ -141,7 +147,7 @@ export class CreateOrEditTradingStrategyDialogComponent {
     }
 
     return (
-      this.tradingPair.valid &&
+      tradingPairIsValid &&
       this.tradingStrategy.valid &&
       this.priceMonitorWindowDays.valid &&
       this.priceMonitorWindowHours.valid &&
@@ -152,6 +158,21 @@ export class CreateOrEditTradingStrategyDialogComponent {
   }
 
   public save(): void {
+    let symbol: string;
+    switch (this.data.state) {
+      case 'create':
+        symbol = this.tradingPair.value;
+        break;
+
+      case 'editOne':
+        symbol = this.data.tradingConfiguration!.symbol;
+        break;
+
+      case 'editMultiple':
+        symbol = '';
+        break;
+    }
+
     const priceMonitorWindowSeconds = Duration.fromObject({
       days: this.priceMonitorWindowDays.value,
       hours: this.priceMonitorWindowHours.value,
@@ -178,7 +199,7 @@ export class CreateOrEditTradingStrategyDialogComponent {
     }
 
     const result: TradingConfiguration = {
-      symbol: this.tradingPair.value,
+      symbol,
       strategy,
       enabled: this.tradingConfigurationEnabled,
     };
