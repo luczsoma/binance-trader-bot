@@ -9,6 +9,9 @@ import { Balance } from 'src/app/types/balance';
 import { Order } from 'src/app/types/order';
 import { TradingConfiguration } from 'src/app/types/tradingConfiguration';
 import { TradingStrategyName } from 'src/app/types/tradingStrategyName';
+import { ApprovalDialogData } from '../approval-dialog/approval-dialog-data';
+import { ApprovalDialogResult } from '../approval-dialog/approval-dialog-result';
+import { ApprovalDialogComponent } from '../approval-dialog/approval-dialog.component';
 import { CreateOrEditTradingStrategyDialogComponent } from '../create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog.component';
 
 @Component({
@@ -70,7 +73,7 @@ export class TraderComponent implements OnInit {
   }
 
   public get tradingConfigurationsColumns(): string[] {
-    return ['status', 'symbol', 'strategy', 'edit'];
+    return ['status', 'symbol', 'strategy', 'modify', 'delete'];
   }
 
   public constructor(
@@ -186,6 +189,31 @@ export class TraderComponent implements OnInit {
     });
   }
 
+  public async confirmDeleteTradingConfiguration(
+    tradingConfiguration: TradingConfiguration
+  ): Promise<void> {
+    const dialogRef = this.dialog.open<
+      ApprovalDialogComponent,
+      ApprovalDialogData,
+      ApprovalDialogResult
+    >(ApprovalDialogComponent, {
+      data: {
+        title: 'Biztos benne?',
+        description: `Biztosan törölni szeretné a ${tradingConfiguration.symbol} kereskedési párra vonatkozó konfigurációt?`,
+        okButtonLabel: 'Igen',
+        cancelButtonLabel: 'Nem',
+      },
+      autoFocus: 'dialog',
+    });
+
+    dialogRef.afterClosed().subscribe(async (result) => {
+      if (result === 'ok') {
+        await this.deleteTradingConfiguration(tradingConfiguration);
+        this.refreshTradingConfigurations();
+      }
+    });
+  }
+
   public async refreshTradableSymbols(force = false): Promise<void> {
     if (force) {
       await this.loginService.withLoginErrorHandling(
@@ -287,6 +315,19 @@ export class TraderComponent implements OnInit {
           tradingStrategyConfiguration:
             tradingConfiguration.strategy.toTradingStrategyConfigurationJson(),
           enabled: tradingConfiguration.enabled,
+        })
+    );
+  }
+
+  private async deleteTradingConfiguration(
+    tradingConfiguration: TradingConfiguration
+  ): Promise<void> {
+    await this.loginService.withLoginErrorHandling(
+      async () =>
+        await this.apiService.deleteTradingConfiguration({
+          symbolId: this.symbolService.getSymbolIdFromFriendlyName(
+            tradingConfiguration.symbol
+          ),
         })
     );
   }

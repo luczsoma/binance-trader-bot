@@ -142,16 +142,29 @@
                   {{ tradingConfiguration.strategy.getFriendlyDescription() }}
                 </td>
               </ng-container>
-              <ng-container matColumnDef="edit">
+              <ng-container matColumnDef="modify">
                 <th mat-header-cell *matHeaderCellDef>Módosítás</th>
                 <td mat-cell *matCellDef="let tradingConfiguration">
                   <button
-                    id="refresh-data-button"
                     mat-stroked-button
                     color="primary"
                     (click)="modifyTradingConfiguration(tradingConfiguration)"
                   >
                     Módosítás
+                  </button>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="delete">
+                <th mat-header-cell *matHeaderCellDef>Törlés</th>
+                <td mat-cell *matCellDef="let tradingConfiguration">
+                  <button
+                    mat-stroked-button
+                    color="warn"
+                    (click)="
+                      confirmDeleteTradingConfiguration(tradingConfiguration)
+                    "
+                  >
+                    Törlés
                   </button>
                 </td>
               </ng-container>

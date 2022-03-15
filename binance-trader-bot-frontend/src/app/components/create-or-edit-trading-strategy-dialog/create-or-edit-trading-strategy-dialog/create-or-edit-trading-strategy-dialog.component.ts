@@ -10,6 +10,7 @@ import { TradingStrategy } from 'src/app/types/strategies/tradingStrategy';
 import { TradingConfiguration } from 'src/app/types/tradingConfiguration';
 import { TradingStrategyName } from 'src/app/types/tradingStrategyName';
 import { CustomValidators } from 'src/app/utils/customValidators';
+import { CreateOrEditTradingStrategyDialogData } from './create-or-edit-trading-strategy-dialog-data';
 
 @Component({
   selector:
@@ -51,11 +52,7 @@ export class CreateOrEditTradingStrategyDialogComponent {
   public constructor(
     private readonly dialogRef: MatDialogRef<CreateOrEditTradingStrategyDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
-    public readonly data: {
-      tradingConfiguration?: TradingConfiguration;
-      tradableSymbols: Set<string>;
-      tradingStrategies: Set<TradingStrategyName>;
-    },
+    public readonly data: CreateOrEditTradingStrategyDialogData,
     private readonly tradingStrategyService: TradingStrategyService,
     private readonly symbolService: SymbolService
   ) {

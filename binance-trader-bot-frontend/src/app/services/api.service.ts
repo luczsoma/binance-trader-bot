@@ -3,6 +3,7 @@ import { environment } from 'src/environments/environment.dev';
 import { ApiException } from '../types/apiException';
 import { Balance } from '../types/balance';
 import { CreateTradingConfigurationRequest } from '../types/createTradingConfigurationRequest';
+import { DeleteTradingConfigurationRequest } from '../types/deleteTradingConfigurationRequest';
 import { EditTradingConfigurationRequest } from '../types/editTradingConfigurationRequest';
 import { GetGlobalTradingLockResponse } from '../types/getGlobalTradingLockResponse';
 import { GetTradingConfigurationResponse } from '../types/getTradingConfigurationResponse';
@@ -71,6 +72,17 @@ export class ApiService {
       'POST',
       this.responseProcessors.void,
       editTradingStrategyConfigurationRequest
+    );
+  }
+
+  public deleteTradingConfiguration(
+    deleteTradingStrategyConfigurationRequest: DeleteTradingConfigurationRequest
+  ): Promise<void> {
+    return this.call<void>(
+      'delete-trading-configuration',
+      'POST',
+      this.responseProcessors.void,
+      deleteTradingStrategyConfigurationRequest
     );
   }
 

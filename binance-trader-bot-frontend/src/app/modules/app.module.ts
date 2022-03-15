@@ -23,6 +23,7 @@ import { CreateOrEditTradingStrategyDialogComponent } from '../components/create
 import { LoginComponent } from '../components/login/login.component';
 import { TraderComponent } from '../components/trader/trader.component';
 import { AppRoutingModule } from './app-routing.module';
+import { ApprovalDialogComponent } from '../components/approval-dialog/approval-dialog.component';
 
 @NgModule({
   declarations: [
@@ -30,6 +31,7 @@ import { AppRoutingModule } from './app-routing.module';
     LoginComponent,
     TraderComponent,
     CreateOrEditTradingStrategyDialogComponent,
+    ApprovalDialogComponent,
   ],
   imports: [
     BrowserModule,
