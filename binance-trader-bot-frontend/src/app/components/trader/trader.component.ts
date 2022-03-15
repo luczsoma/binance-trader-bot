@@ -12,6 +12,7 @@ import { TradingStrategyName } from 'src/app/types/tradingStrategyName';
 import { ApprovalDialogData } from '../approval-dialog/approval-dialog-data';
 import { ApprovalDialogResult } from '../approval-dialog/approval-dialog-result';
 import { ApprovalDialogComponent } from '../approval-dialog/approval-dialog.component';
+import { CreateOrEditTradingStrategyDialogData } from '../create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog-data';
 import { CreateOrEditTradingStrategyDialogComponent } from '../create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog/create-or-edit-trading-strategy-dialog.component';
 
 @Component({
@@ -140,10 +141,7 @@ export class TraderComponent implements OnInit {
   public async addTradingConfiguration(): Promise<void> {
     const dialogRef = this.dialog.open<
       CreateOrEditTradingStrategyDialogComponent,
-      {
-        tradableSymbols: Set<string>;
-        tradingStrategies: Set<TradingStrategyName>;
-      },
+      CreateOrEditTradingStrategyDialogData,
       TradingConfiguration
     >(CreateOrEditTradingStrategyDialogComponent, {
       data: {
