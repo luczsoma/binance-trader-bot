@@ -246,23 +246,26 @@ export class TraderComponent implements OnInit {
   }
 
   private async refreshBalances(): Promise<void> {
-    this._balances = await this.loginService.withLoginErrorHandling(
+    const balances = await this.loginService.withLoginErrorHandling(
       async () => await this.apiService.getBalances()
     );
+    this._balances = balances.sort((a, b) => a.asset.localeCompare(b.asset));
   }
 
   private async refreshOpenOrders(): Promise<void> {
     const openOrders = await this.loginService.withLoginErrorHandling(
       async () => await this.apiService.getCurrentOpenOrders()
     );
-    this._openOrders = openOrders.map(
-      (orderResponse) =>
-        new Order(
-          orderResponse.symbol,
-          orderResponse.origQty,
-          orderResponse.price
-        )
-    );
+    this._openOrders = openOrders
+      .map(
+        (orderResponse) =>
+          new Order(
+            orderResponse.symbol,
+            orderResponse.origQty,
+            orderResponse.price
+          )
+      )
+      .sort((a, b) => a.pair.localeCompare(b.pair));
   }
 
   private async refreshIsTradingEnabled(): Promise<void> {
@@ -278,8 +281,8 @@ export class TraderComponent implements OnInit {
       await this.loginService.withLoginErrorHandling(
         async () => await this.apiService.getTradingConfigurations()
       );
-    this._tradingConfigurations = getTradingConfigurationResponse.map(
-      (getTradingConfigurationResponse) => ({
+    this._tradingConfigurations = getTradingConfigurationResponse
+      .map((getTradingConfigurationResponse) => ({
         symbol: this.symbolService.getFriendlyNameFromSymbolId(
           getTradingConfigurationResponse.symbolId
         ),
@@ -288,8 +291,8 @@ export class TraderComponent implements OnInit {
           getTradingConfigurationResponse.tradingStrategyConfiguration
         ),
         enabled: getTradingConfigurationResponse.enabled,
-      })
-    );
+      }))
+      .sort((a, b) => a.symbol.localeCompare(b.symbol));
   }
 
   private async createTradingConfiguration(
