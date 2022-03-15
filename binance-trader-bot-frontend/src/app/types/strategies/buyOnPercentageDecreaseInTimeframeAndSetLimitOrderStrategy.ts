@@ -41,9 +41,9 @@ export class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends 
   public toTradingStrategyConfigurationJson(): string {
     return JSON.stringify({
       priceMonitorWindowSeconds: this.priceMonitorWindowSeconds,
-      priceDecreaseTriggerRatio: this.priceDecreaseTriggerRatio,
-      buySpendAmount: this.buySpendAmount,
-      limitSellPriceRatio: this.limitSellPriceRatio,
+      priceDecreaseTriggerRatio: this.priceDecreaseTriggerRatio.toString(10),
+      buySpendAmount: this.buySpendAmount.toString(10),
+      limitSellPriceRatio: this.limitSellPriceRatio.toString(10),
     });
   }
 

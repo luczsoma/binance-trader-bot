@@ -50,10 +50,10 @@ public class BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy extends 
             JSONObject tradingStrategyConfigurationJson) {
         long priceMonitorWindowSeconds = tradingStrategyConfigurationJson.getLong("priceMonitorWindowSeconds");
         Duration priceMonitorWindow = Duration.ofSeconds(priceMonitorWindowSeconds);
-        BigDecimal priceDecreaseTriggerRatio = tradingStrategyConfigurationJson.getBigDecimal(
-                "priceDecreaseTriggerRatio");
-        BigDecimal buySpendAmount = tradingStrategyConfigurationJson.getBigDecimal("buySpendAmount");
-        BigDecimal limitSellPriceRatio = tradingStrategyConfigurationJson.getBigDecimal("limitSellPriceRatio");
+        BigDecimal priceDecreaseTriggerRatio = new BigDecimal(tradingStrategyConfigurationJson.getString(
+                "priceDecreaseTriggerRatio"));
+        BigDecimal buySpendAmount = new BigDecimal(tradingStrategyConfigurationJson.getString("buySpendAmount"));
+        BigDecimal limitSellPriceRatio = new BigDecimal(tradingStrategyConfigurationJson.getString("limitSellPriceRatio"));
 
         return new BuyOnPercentageDecreaseInTimeframeAndSetLimitOrderStrategy(
                 priceMonitorWindow,
