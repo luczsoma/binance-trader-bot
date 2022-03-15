@@ -8,7 +8,6 @@ import { TradingStrategyService } from 'src/app/services/trading-strategy.servic
 import { Balance } from 'src/app/types/balance';
 import { Order } from 'src/app/types/order';
 import { TradingConfiguration } from 'src/app/types/tradingConfiguration';
-import { TradingStrategyName } from 'src/app/types/tradingStrategyName';
 import { ApprovalDialogData } from '../approval-dialog/approval-dialog-data';
 import { ApprovalDialogResult } from '../approval-dialog/approval-dialog-result';
 import { ApprovalDialogComponent } from '../approval-dialog/approval-dialog.component';
@@ -164,11 +163,7 @@ export class TraderComponent implements OnInit {
   ): Promise<void> {
     const dialogRef = this.dialog.open<
       CreateOrEditTradingStrategyDialogComponent,
-      {
-        tradingConfiguration: TradingConfiguration;
-        tradableSymbols: Set<string>;
-        tradingStrategies: Set<TradingStrategyName>;
-      },
+      CreateOrEditTradingStrategyDialogData,
       TradingConfiguration
     >(CreateOrEditTradingStrategyDialogComponent, {
       data: {
@@ -230,10 +225,18 @@ export class TraderComponent implements OnInit {
       await this.loginService.withLoginErrorHandling(
         async () => await this.apiService.getTradableSymbols()
       );
+    await this.refreshTradingConfigurations();
     this._tradableSymbols = new Set(
-      tradableSymbolsResponse.map((symbolId) =>
-        this.symbolService.getFriendlyNameFromSymbolId(symbolId)
-      )
+      tradableSymbolsResponse
+        .map((symbolId) =>
+          this.symbolService.getFriendlyNameFromSymbolId(symbolId)
+        )
+        .filter(
+          (symbol) =>
+            this.tradingConfigurations.filter(
+              (tradingConfiguration) => tradingConfiguration.symbol === symbol
+            ).length === 0
+        )
     );
 
     if (blockUi) {

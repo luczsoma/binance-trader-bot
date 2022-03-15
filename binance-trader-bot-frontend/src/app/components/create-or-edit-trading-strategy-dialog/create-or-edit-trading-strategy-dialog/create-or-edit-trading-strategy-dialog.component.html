@@ -1,6 +1,6 @@
 <h1 mat-dialog-title>
   Kereskedési konfiguráció
-  {{ data.tradingConfiguration ? "szerkesztése" : "létrehozása" }}
+  {{ editing ? "szerkesztése" : "létrehozása" }}
 </h1>
 
 <div mat-dialog-content>
@@ -15,9 +15,10 @@
         aria-label="Kereskedési pár"
         matInput
         [formControl]="tradingPair"
-        [matAutocomplete]="auto"
+        [matAutocomplete]="tradingPairAutocomplete"
+        [readonly]="editing"
       />
-      <mat-autocomplete #auto="matAutocomplete">
+      <mat-autocomplete #tradingPairAutocomplete="matAutocomplete">
         <mat-option
           *ngFor="let tradingPair of filteredTradingPairs | async"
           [value]="tradingPair"

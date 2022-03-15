@@ -19,6 +19,8 @@ import { CreateOrEditTradingStrategyDialogData } from './create-or-edit-trading-
   styleUrls: ['./create-or-edit-trading-strategy-dialog.component.scss'],
 })
 export class CreateOrEditTradingStrategyDialogComponent {
+  public readonly editing: boolean;
+
   public tradingPair = new FormControl('', [
     Validators.required,
     CustomValidators.allowedValues(this.data.tradableSymbols),
@@ -58,6 +60,8 @@ export class CreateOrEditTradingStrategyDialogComponent {
     private readonly tradingStrategyService: TradingStrategyService,
     private readonly symbolService: SymbolService
   ) {
+    this.editing = this.data.tradingConfiguration !== undefined;
+
     this.filteredTradingPairs = this.tradingPair.valueChanges.pipe(
       startWith(''),
       map((value) =>
