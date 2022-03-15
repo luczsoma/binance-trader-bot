@@ -214,7 +214,14 @@ export class TraderComponent implements OnInit {
     });
   }
 
-  public async refreshTradableSymbols(force = false): Promise<void> {
+  public async refreshTradableSymbols(
+    force = false,
+    blockUi = false
+  ): Promise<void> {
+    if (blockUi) {
+      this._loaded = false;
+    }
+
     if (force) {
       await this.loginService.withLoginErrorHandling(
         async () => await this.apiService.refreshTradableSymbols()
@@ -230,6 +237,10 @@ export class TraderComponent implements OnInit {
         this.symbolService.getFriendlyNameFromSymbolId(symbolId)
       )
     );
+
+    if (blockUi) {
+      this._loaded = true;
+    }
   }
 
   private async refreshBalances(): Promise<void> {
