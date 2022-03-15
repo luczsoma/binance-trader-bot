@@ -237,6 +237,7 @@ export class TraderComponent implements OnInit {
               (tradingConfiguration) => tradingConfiguration.symbol === symbol
             ).length === 0
         )
+        .sort((a, b) => a.localeCompare(b))
     );
 
     if (blockUi) {
