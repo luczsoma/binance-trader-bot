@@ -133,9 +133,10 @@ public class TraderService {
 
     public void deleteTradingConfiguration(DeleteTradingConfigurationRequest request) {
         String symbolId = request.getSymbolId().toUpperCase();
-        this.tradingConfigurationRepository.findBySymbolId(symbolId)
-                .ifPresent(tradingConfiguration -> this.tradingConfigurationRepository.delete(tradingConfiguration));
+        TradingConfiguration tradingConfiguration = this.tradingConfigurationRepository.findBySymbolId(symbolId)
+                .orElseThrow(() -> new BadRequestException("no such symbol id"));
 
+        this.tradingConfigurationRepository.delete(tradingConfiguration);
         this.unsubscribeTradingStrategy(symbolId);
         this.tradingConfigurationsCache.remove(symbolId);
     }

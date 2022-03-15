@@ -228,8 +228,14 @@ export class TraderComponent implements OnInit {
     });
   }
 
-  public async confirmDeleteTradingConfiguration(
-    tradingConfiguration: TradingConfiguration
+  public async confirmDeleteSelectedTradingConfigurations(): Promise<void> {
+    await this.confirmDeleteTradingConfigurations(
+      Array.from(this.selectedTradingConfigurations)
+    );
+  }
+
+  public async confirmDeleteTradingConfigurations(
+    tradingConfigurations: string[]
   ): Promise<void> {
     const dialogRef = this.dialog.open<
       ApprovalDialogComponent,
@@ -238,7 +244,9 @@ export class TraderComponent implements OnInit {
     >(ApprovalDialogComponent, {
       data: {
         title: 'Biztos benne?',
-        description: `Biztosan törölni szeretné a ${tradingConfiguration.symbol} kereskedési párra vonatkozó konfigurációt?`,
+        description: `Biztosan törölni szeretné a(z) ${tradingConfigurations.join(
+          ', '
+        )} kereskedési pár(ok)ra vonatkozó konfiguráció(ka)t?`,
         okButtonLabel: 'Igen',
         cancelButtonLabel: 'Nem',
       },
@@ -247,7 +255,15 @@ export class TraderComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(async (result) => {
       if (result === 'ok') {
-        await this.deleteTradingConfiguration(tradingConfiguration);
+        await Promise.all(
+          tradingConfigurations.map((tradingConfiguration) => {
+            const symbolId =
+              this.symbolService.getSymbolIdFromFriendlyName(
+                tradingConfiguration
+              );
+            return this.deleteTradingConfiguration(symbolId);
+          })
+        );
         this.refreshTradingConfigurations();
       }
     });
@@ -380,7 +396,7 @@ export class TraderComponent implements OnInit {
       }))
       .sort((a, b) => a.symbol.localeCompare(b.symbol));
 
-    this._selectedTradingConfigurations.clear();
+    this.selectedTradingConfigurations.clear();
   }
 
   private async createTradingConfiguration(
@@ -423,15 +439,11 @@ export class TraderComponent implements OnInit {
     );
   }
 
-  private async deleteTradingConfiguration(
-    tradingConfiguration: TradingConfiguration
-  ): Promise<void> {
+  private async deleteTradingConfiguration(symbolId: string): Promise<void> {
     await this.loginService.withLoginErrorHandling(
       async () =>
         await this.apiService.deleteTradingConfiguration({
-          symbolId: this.symbolService.getSymbolIdFromFriendlyName(
-            tradingConfiguration.symbol
-          ),
+          symbolId,
         })
     );
   }

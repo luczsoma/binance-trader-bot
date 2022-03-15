@@ -91,7 +91,7 @@
       <ng-container *ngIf="loaded">
         <div class="tables">
           <div id="batch-change">
-            <h2>Több konfiguráció együttes módosítása</h2>
+            <h2>Több konfiguráció együttes módosítása vagy törlése</h2>
 
             <p *ngIf="!hasTradingConfigurations">
               Jelenleg nincsen egyetlen kereskedési konfigurációja sem.
@@ -105,6 +105,15 @@
                 [disabled]="!someTradingConfigurationsAreSelected()"
               >
                 A kijelölt kereskedési konfigurációk módosítása
+              </button>
+              &nbsp;
+              <button
+                mat-stroked-button
+                color="warn"
+                (click)="confirmDeleteSelectedTradingConfigurations()"
+                [disabled]="!someTradingConfigurationsAreSelected()"
+              >
+                A kijelölt kereskedési konfigurációk törlése
               </button>
             </p>
           </div>
@@ -213,7 +222,9 @@
                     mat-stroked-button
                     color="warn"
                     (click)="
-                      confirmDeleteTradingConfiguration(tradingConfiguration)
+                      confirmDeleteTradingConfigurations([
+                        tradingConfiguration.symbol
+                      ])
                     "
                   >
                     Törlés
