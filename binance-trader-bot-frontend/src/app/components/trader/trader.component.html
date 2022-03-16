@@ -261,7 +261,19 @@
   </mat-tab>
 
   <mat-tab label="Eredmények">
-    <p>Hamarosan…</p>
+    <div class="tab-contents">
+      <div *ngIf="!loaded" class="loader-wrapper">
+        <mat-spinner></mat-spinner>
+      </div>
+
+      <ng-container *ngIf="loaded">
+        <div class="tables">
+          <div id="results">
+            <p>Hamarosan…</p>
+          </div>
+        </div>
+      </ng-container>
+    </div>
   </mat-tab>
 
   <mat-tab label="Hibalogok">
