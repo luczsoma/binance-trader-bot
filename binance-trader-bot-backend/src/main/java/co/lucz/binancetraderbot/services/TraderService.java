@@ -46,7 +46,7 @@ public class TraderService {
     private final Duration BINANCE_WEBSOCKET_CONNECTION_MAX_DURATION = Duration.ofHours(23);
 
     private final Map<String, TradingConfiguration> tradingConfigurationsCache = new HashMap<>();
-    private boolean globalTradingLockCache;
+    private boolean globalTradingLockCache = true;
 
     private final Map<String, BookTickerSubscriptionInfo> bookTickerSubscriptionInfos = new HashMap<>();
     private final Map<String, List<PriceInfo>> priceInfos = new HashMap<>();
@@ -80,11 +80,11 @@ public class TraderService {
         List<GetTradingConfigurationResponse> getTradingConfigurationResponses = new ArrayList<>();
         this.tradingConfigurationRepository.findAll().forEach(
                 tradingConfiguration -> getTradingConfigurationResponses.add(new GetTradingConfigurationResponse(
-                                                             tradingConfiguration.getSymbolId(),
-                                                             tradingConfiguration.getTradingStrategyName(),
-                                                             tradingConfiguration.getTradingStrategyConfiguration(),
-                                                             tradingConfiguration.getEnabled()
-                                                     )
+                                                                                     tradingConfiguration.getSymbolId(),
+                                                                                     tradingConfiguration.getTradingStrategyName(),
+                                                                                     tradingConfiguration.getTradingStrategyConfiguration(),
+                                                                                     tradingConfiguration.getEnabled()
+                                                                             )
                 )
         );
         return getTradingConfigurationResponses;
@@ -185,6 +185,8 @@ public class TraderService {
                 tradingConfiguration -> this.tradingConfigurationsCache.put(tradingConfiguration.getSymbolId(),
                                                                             tradingConfiguration));
         this.tradingConfigurationsCache.keySet().forEach(this::subscribeTradingStrategy);
+
+        this.globalTradingLockCache = this.getGlobalTradingLockInternal();
     }
 
     @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
