@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import java.time.Instant;
 
 @Entity
 public class ErrorLogEntry {
@@ -20,14 +21,17 @@ public class ErrorLogEntry {
     @Column(columnDefinition = "CLOB DEFAULT NULL")
     private String stackTrace;
 
+    private Instant instant;
+
     public ErrorLogEntry() {
     }
 
-    public ErrorLogEntry(String name, String message, String localizedMessage, String stackTrace) {
+    public ErrorLogEntry(String name, String message, String localizedMessage, String stackTrace, Instant instant) {
         this.name = name;
         this.message = message;
         this.localizedMessage = localizedMessage;
         this.stackTrace = stackTrace;
+        this.instant = instant;
     }
 
     public String getName() {
@@ -60,5 +64,13 @@ public class ErrorLogEntry {
 
     public void setStackTrace(String stackTrace) {
         this.stackTrace = stackTrace;
+    }
+
+    public Instant getInstant() {
+        return instant;
+    }
+
+    public void setInstant(Instant instant) {
+        this.instant = instant;
     }
 }

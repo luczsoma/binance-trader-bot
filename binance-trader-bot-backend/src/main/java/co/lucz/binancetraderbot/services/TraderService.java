@@ -197,6 +197,11 @@ public class TraderService {
         });
     }
 
+    @Scheduled(fixedDelay = 7, timeUnit = TimeUnit.DAYS)
+    private void cleanUpErrorLogs() {
+        this.errorLoggerService.deleteAllErrorLogs();
+    }
+
     // endregion
 
     private void subscribeTradingStrategy(String symbolId) {

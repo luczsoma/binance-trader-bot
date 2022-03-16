@@ -5,6 +5,7 @@ import { Balance } from '../types/balance';
 import { CreateTradingConfigurationRequest } from '../types/createTradingConfigurationRequest';
 import { DeleteTradingConfigurationRequest } from '../types/deleteTradingConfigurationRequest';
 import { EditTradingConfigurationRequest } from '../types/editTradingConfigurationRequest';
+import { ErrorLogEntry } from '../types/errorLogEntry';
 import { GetGlobalTradingLockResponse } from '../types/getGlobalTradingLockResponse';
 import { GetTradingConfigurationResponse } from '../types/getTradingConfigurationResponse';
 import { OpenOrderResponse } from '../types/openOrderResponse';
@@ -116,6 +117,14 @@ export class ApiService {
   public getBalances(): Promise<Balance[]> {
     return this.call<Balance[]>(
       'get-balances',
+      'GET',
+      this.responseProcessors.json
+    );
+  }
+
+  public getErrorLogs(): Promise<ErrorLogEntry[]> {
+    return this.call<ErrorLogEntry[]>(
+      'get-error-logs',
       'GET',
       this.responseProcessors.json
     );

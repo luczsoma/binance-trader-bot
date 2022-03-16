@@ -7,6 +7,7 @@ import { LoginService } from 'src/app/services/login.service';
 import { SymbolService } from 'src/app/services/symbol.service';
 import { TradingStrategyService } from 'src/app/services/trading-strategy.service';
 import { Balance } from 'src/app/types/balance';
+import { ErrorLogEntry } from 'src/app/types/errorLogEntry';
 import { Order } from 'src/app/types/order';
 import { TradingConfiguration } from 'src/app/types/tradingConfiguration';
 import { ApprovalDialogData } from '../approval-dialog/approval-dialog-data';
@@ -28,6 +29,8 @@ export class TraderComponent implements OnInit {
   private _openOrders: Order[] = [];
   private _isTradingEnabled = true;
   private _tradingConfigurations: TradingConfiguration[] = [];
+  private _errorLogs: ErrorLogEntry[] = [];
+
   private _selectedTradingConfigurations: Set<string> = new Set();
 
   public get loaded(): boolean {
@@ -78,6 +81,18 @@ export class TraderComponent implements OnInit {
     return ['select', 'status', 'symbol', 'strategy', 'modify', 'delete'];
   }
 
+  public get errorLogs(): ErrorLogEntry[] {
+    return this._errorLogs;
+  }
+
+  public get hasErrorLogs(): boolean {
+    return this.errorLogs.length > 0;
+  }
+
+  public get errorLogsColumns(): string[] {
+    return ['instant', 'name', 'message', 'details'];
+  }
+
   public get selectedTradingConfigurations(): Set<string> {
     return this._selectedTradingConfigurations;
   }
@@ -97,6 +112,7 @@ export class TraderComponent implements OnInit {
       this.refreshOpenOrders(),
       this.refreshIsTradingEnabled(),
       this.refreshTradingConfigurations(),
+      this.refreshErrorLogs(),
     ]);
 
     this._loaded = true;
@@ -111,6 +127,7 @@ export class TraderComponent implements OnInit {
       this.refreshOpenOrders(),
       this.refreshIsTradingEnabled(),
       this.refreshTradingConfigurations(),
+      this.refreshErrorLogs(),
     ]);
 
     this._loaded = true;
@@ -347,6 +364,8 @@ export class TraderComponent implements OnInit {
     );
   }
 
+  public showErrorDetails(errorLogEntry: ErrorLogEntry[]): void {}
+
   private async refreshBalances(): Promise<void> {
     const balances = await this.loginService.withLoginErrorHandling(
       async () => await this.apiService.getBalances()
@@ -397,6 +416,13 @@ export class TraderComponent implements OnInit {
       .sort((a, b) => a.symbol.localeCompare(b.symbol));
 
     this.selectedTradingConfigurations.clear();
+  }
+
+  private async refreshErrorLogs(): Promise<void> {
+    const errorLogs = await this.loginService.withLoginErrorHandling(
+      async () => await this.apiService.getErrorLogs()
+    );
+    this._errorLogs = errorLogs.reverse();
   }
 
   private async createTradingConfiguration(

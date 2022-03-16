@@ -265,6 +265,57 @@
   </mat-tab>
 
   <mat-tab label="Hibalogok">
-    <p>Hamarosan…</p>
+    <div class="tab-contents">
+      <div *ngIf="!loaded" class="loader-wrapper">
+        <mat-spinner></mat-spinner>
+      </div>
+
+      <ng-container *ngIf="loaded">
+        <div class="tables">
+          <div id="error-logs">
+            <p *ngIf="!hasErrorLogs">Jelenleg nincsen hibalog.</p>
+
+            <table *ngIf="hasErrorLogs" mat-table [dataSource]="errorLogs">
+              <ng-container matColumnDef="instant">
+                <th mat-header-cell *matHeaderCellDef>Időpont</th>
+                <td mat-cell *matCellDef="let errorLogEntry">
+                  {{ errorLogEntry.instant }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Hibaosztály</th>
+                <td mat-cell *matCellDef="let errorLogEntry">
+                  {{ errorLogEntry.name }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="message">
+                <th mat-header-cell *matHeaderCellDef>Hibaüzenet</th>
+                <td mat-cell *matCellDef="let errorLogEntry">
+                  {{ errorLogEntry.message }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="details">
+                <th mat-header-cell *matHeaderCellDef>Részletek</th>
+                <td mat-cell *matCellDef="let errorLogEntry">
+                  <button
+                    mat-stroked-button
+                    color="primary"
+                    (click)="showErrorDetails(errorLogEntry)"
+                  >
+                    Megnyitás
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="errorLogsColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: errorLogsColumns"></tr>
+            </table>
+          </div>
+        </div>
+      </ng-container>
+    </div>
   </mat-tab>
 </mat-tab-group>

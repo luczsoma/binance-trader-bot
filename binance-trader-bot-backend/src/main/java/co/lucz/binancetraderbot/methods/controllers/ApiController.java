@@ -2,12 +2,14 @@ package co.lucz.binancetraderbot.methods.controllers;
 
 import co.lucz.binancetraderbot.binance.entities.Balance;
 import co.lucz.binancetraderbot.binance.entities.OpenOrderResponse;
+import co.lucz.binancetraderbot.entities.ErrorLogEntry;
 import co.lucz.binancetraderbot.methods.entities.requests.CreateTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.DeleteTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.EditTradingConfigurationRequest;
 import co.lucz.binancetraderbot.methods.entities.requests.SetGlobalTradingLockRequest;
 import co.lucz.binancetraderbot.methods.entities.responses.GetGlobalTradingLockResponse;
 import co.lucz.binancetraderbot.methods.entities.responses.GetTradingConfigurationResponse;
+import co.lucz.binancetraderbot.services.ErrorLoggerService;
 import co.lucz.binancetraderbot.services.TraderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -23,6 +25,9 @@ import java.util.List;
 public class ApiController {
     @Autowired
     private TraderService traderService;
+
+    @Autowired
+    private ErrorLoggerService errorLoggerService;
 
     @RequestMapping(
             name = "GetTradingConfigurations",
@@ -121,5 +126,15 @@ public class ApiController {
     )
     public List<Balance> getBalances() {
         return this.traderService.getBalances();
+    }
+
+    @RequestMapping(
+            name = "GetErrorLogs",
+            path = "get-error-logs",
+            method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public List<ErrorLogEntry> getErrorLogs() {
+        return this.errorLoggerService.getErrorLogs();
     }
 }
